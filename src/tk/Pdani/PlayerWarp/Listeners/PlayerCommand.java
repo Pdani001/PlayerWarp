@@ -61,6 +61,7 @@ public class PlayerCommand implements CommandExecutor {
 						sender.sendMessage(ChatColor.RED + noPerm);
 						return true;
 					}
+					Main.reloadMessages();
 					try {
 						wm.reloadWarps();
 					} catch (NullPointerException e) {

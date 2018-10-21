@@ -37,48 +37,7 @@ public class Main extends JavaPlugin {
 		
 		debug = this.getConfig().getBoolean("debug", false);
 		
-		/*
-		 * MESSAGE MANAGER LOADING
-		 */
-		InputStream is = this.getResource("messages.properties");
-		Properties defprops = new Properties();
-		Properties props = new Properties();
-		try {
-			if(is == null) {
-				getLogger().log(Level.SEVERE, "The messages.properties file was not loaded from the jar!");
-				defprops = null;
-			} else {
-				defprops.load(is);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			defprops = null;
-		}
-		MessageManager.setDefProps(defprops);
-		String version = MessageManager.getDefString("version");
-		File f = new File(this.getDataFolder(),"messages.properties");
-		if(!f.exists()) {
-			if(isDebug())getLogger().log(Level.INFO, "Created new messages.properties file");
-			this.saveResource("messages.properties",f);
-		} else {
-			InputStream fis = null;
-			try {
-				fis = new FileInputStream(f);
-				props.load(fis);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-			MessageManager.setProps(props);
-			String cv = MessageManager.getString("version", false);
-			if((cv == null || !cv.equals(version))){
-				if(getConfig().getBoolean("autoUpdateMessages", true)){
-					updateMsg(f,is);
-				} else {
-					msgUpdate = true;
-					getLogger().log(Level.WARNING, "A new messages.properties file is available! You can update it with /playerwarp updatemsg");
-				}
-			}
-		}
+		reloadMessages();
 		
 		this.cc = new CustomConfig(this);
 		PlayerJoin pj = new PlayerJoin(this,cc);
@@ -151,6 +110,47 @@ public class Main extends JavaPlugin {
 			msgUpdate = false;
 		} catch (Exception e) {
 			e.printStackTrace(); // Will probably never print
+		}
+	}
+	public static void reloadMessages(){
+		InputStream is = instance.getResource("messages.properties");
+		Properties defprops = new Properties();
+		Properties props = new Properties();
+		try {
+			if(is == null) {
+				instance.getLogger().log(Level.SEVERE, "The messages.properties file was not loaded from the jar!");
+				defprops = null;
+			} else {
+				defprops.load(is);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			defprops = null;
+		}
+		MessageManager.setDefProps(defprops);
+		String version = MessageManager.getDefString("version");
+		File f = new File(instance.getDataFolder(),"messages.properties");
+		if(!f.exists()) {
+			if(isDebug())instance.getLogger().log(Level.INFO, "Created new messages.properties file");
+			main.saveResource("messages.properties",f);
+		} else {
+			InputStream fis = null;
+			try {
+				fis = new FileInputStream(f);
+				props.load(fis);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+			MessageManager.setProps(props);
+			String cv = MessageManager.getString("version", false);
+			if((cv == null || !cv.equals(version))){
+				if(instance.getConfig().getBoolean("autoUpdateMessages", true)){
+					updateMsg(f,is);
+				} else {
+					msgUpdate = true;
+					instance.getLogger().log(Level.WARNING, "A new messages.properties file is available! You can update it with /playerwarp updatemsg");
+				}
+			}
 		}
 	}
 	
