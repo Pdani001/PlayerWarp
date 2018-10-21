@@ -1,0 +1,36 @@
+name: PlayerWarp
+main: tk.Pdani.PlayerWarp.Main
+version: 0.2.0
+author: Pdani001
+description: Adds the ability for players to create their own warps
+website: https://pdani.tk/
+softdepend: [Vault]
+commands:
+  playerwarp:
+    description: PlayerWarp command
+    usage: /<command> [args...]
+    aliases: [pw,pwarp,playerw]
+permissions:
+  playerwarp.use:
+    description: Permission to use player warps
+    default: true
+  playerwarp.create:
+    description: Gives permission to create player warps
+    default: false
+  playerwarp.remove:
+    description: Gives permission to remove player warps
+    default: false
+  playerwarp.remove.others:
+    description: Remove other players warps
+    default: false
+  playerwarp.limit.unlimited:
+    description: Permission to create unlimited warps
+    default: false
+  playerwarp.*:
+    description: Give players with op everything by default
+    default: op
+    children:
+      playerwarp.create: true
+      playerwarp.remove: true
+      playerwarp.remove.others: true
+      playerwarp.limit.unlimited: true
