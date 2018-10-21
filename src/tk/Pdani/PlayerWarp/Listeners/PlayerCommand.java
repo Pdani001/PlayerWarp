@@ -36,6 +36,8 @@ public class PlayerCommand implements CommandExecutor {
 							list += (list.equals("")) ? w : ", "+w;
 						}
 					}
+					if(list.equals(""))
+						list = MessageManager.getString("none");
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), list)));
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
