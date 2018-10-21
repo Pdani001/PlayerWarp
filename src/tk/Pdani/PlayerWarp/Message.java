@@ -6,6 +6,9 @@ import java.util.regex.Pattern;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Based on Essentials' I18n class
+ */
 public class Message {
 	private JavaPlugin plugin = null;
 	private static final Pattern NODOUBLEMARK = Pattern.compile("''");
