@@ -44,7 +44,7 @@ public class WarpManager {
 	}
 	public void addWarp(Player owner, String name) throws PlayerWarpException{
 		if(isWarp(name)){
-			String text = MessageManager.getString("warpNotFound");
+			String text = MessageManager.getString("warpAlreadyExists");
 			throw new PlayerWarpException(m.tl(text,name));
 		}
 		if(this.restricted.contains(name)){
