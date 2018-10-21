@@ -12,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import tk.Pdani.PlayerWarp.HelpType;
 import tk.Pdani.PlayerWarp.Message;
+import tk.Pdani.PlayerWarp.PlayerWarpException;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
 import tk.Pdani.PlayerWarp.Managers.WarpManager;
 
@@ -39,6 +40,39 @@ public class PlayerCommand implements CommandExecutor {
 					if(list.equals(""))
 						list = MessageManager.getString("none");
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), list)));
+				} else if(args[0].equalsIgnoreCase("create")){
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					sendHelp(sender,commandLabel,HelpType.CREATE);
+				} else if(args[0].equalsIgnoreCase("remove")){
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					sendHelp(sender,commandLabel,HelpType.REMOVE);
+				} else {
+					sendHelp(sender,commandLabel,HelpType.ALL);
+				}
+			} else if(args.length == 2) {
+				if(args[0].equalsIgnoreCase("create")){
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					Player player = (Player) sender;
+					String warp = args[1];
+					try {
+						wm.addWarp(player, warp);
+					} catch (PlayerWarpException e) {
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+					}
+				} else if(args[0].equalsIgnoreCase("remove")){
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -66,6 +100,7 @@ public class PlayerCommand implements CommandExecutor {
 				msg = m.tl(msg, count, limit);
 				sender.sendMessage(msg);
 			}
+			sender.sendMessage(ChatColor.GOLD + l(label)+"list");
 			if(sender.hasPermission("playerwarp.create"))
 				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>");
 			if(sender.hasPermission("playerwarp.remove"))

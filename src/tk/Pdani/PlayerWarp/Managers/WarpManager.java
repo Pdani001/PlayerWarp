@@ -54,6 +54,10 @@ public class WarpManager {
 		
 		cc.getConfig(uuid).set("warps."+name+".location", owner.getLocation());
 		cc.saveConfig(uuid);
+		
+		String msg = MessageManager.getString("warpRemoved");
+		msg = m.tl(msg,name);
+		owner.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 	}
 	public void delWarp(Player user, String warp) throws PlayerWarpException{
 		if(!this.warps.containsValue(warp)){
@@ -78,6 +82,8 @@ public class WarpManager {
 			msg = m.tl(msg,warp);
 			user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 		} else {
+			cc.getConfig(warpowner).set("warps."+warp, null);
+			cc.saveConfig(warpowner);
 			String msg = "";
 			if(isOwner){
 				msg = MessageManager.getString("warpRemoved");
