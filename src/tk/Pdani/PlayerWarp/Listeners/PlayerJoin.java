@@ -22,7 +22,7 @@ public class PlayerJoin implements Listener {
 	public void onJoin(PlayerJoinEvent ev){
 		String uuid = ev.getPlayer().getUniqueId().toString();
 		if(!cc.hasConfig(uuid)){
-			cc.getConfig(uuid).set("warps", new String[0]);
+			cc.getConfig(uuid).set("name", ev.getPlayer().getName());
 			cc.saveConfig(uuid);
 			if(Main.isDebug()) plugin.getLogger().log(Level.INFO, "Player file created for "+ev.getPlayer().getName());
 		}

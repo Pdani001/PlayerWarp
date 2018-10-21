@@ -21,6 +21,7 @@ import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
 import tk.Pdani.PlayerWarp.Listeners.PlayerJoin;
 import tk.Pdani.PlayerWarp.Managers.CustomConfig;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
+import tk.Pdani.PlayerWarp.Managers.WarpManager;
 
 public class Main extends JavaPlugin {
 	private CustomConfig cc = null;
@@ -96,10 +97,18 @@ public class Main extends JavaPlugin {
 		for(Player p : players){
 			String uuid = p.getUniqueId().toString();
 			if(!cc.hasConfig(uuid)){
-				cc.getConfig(uuid).set("warps", new String[0]);
+				cc.getConfig(uuid).set("name", p.getName());
 				cc.saveConfig(uuid);
 				if(isDebug()) getLogger().log(Level.INFO, "Player file created for "+p.getName());
 			}
+		}
+		WarpManager wm = new WarpManager(this);
+		try {
+			wm.loadWarps();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} catch (PlayerWarpException e) {
+			if(isDebug()) getLogger().log(Level.WARNING, e.getMessage());
 		}
 	}
 	public void onDisable(){

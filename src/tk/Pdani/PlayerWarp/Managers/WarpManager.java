@@ -1,9 +1,11 @@
 package tk.Pdani.PlayerWarp.Managers;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -137,5 +139,41 @@ public class WarpManager {
 		restricted.add("create");
 		restricted.add("remove");
 		restricted.add("list");
+	}
+	public void loadWarps() throws NullPointerException,PlayerWarpException {
+		if(!this.warps.isEmpty()){
+			throw new PlayerWarpException("Warps already loaded!");
+		}
+		File dir = new File(plugin.getDataFolder(),"/players");
+		File[] directoryListing = dir.listFiles();
+		if (directoryListing != null) {
+			for (File child : directoryListing) {
+				ArrayList<String> wl = new ArrayList<String>();
+				String name = child.getName();
+				String uuid = "";
+				if(name.endsWith(".yml")){
+					uuid = name.replace(".yml", "");
+				} else {
+					continue;
+				}
+				if(cc.getConfig(uuid).isConfigurationSection("warps")){
+					for(String k : cc.getConfig(uuid).getConfigurationSection("warps").getKeys(false)){
+						wl.add(k);
+					}
+					Player player = plugin.getServer().getPlayer(UUID.fromString(uuid));
+					if(player == null){
+						throw new NullPointerException("Player is null!!");
+					}
+					this.warps.put(player, wl);
+				}
+			}
+		} else {
+			throw new PlayerWarpException("Players directory not found!");
+		}
+	}
+	
+	public void reloadWarps() throws NullPointerException,PlayerWarpException {
+		this.warps.clear();
+		loadWarps();
 	}
 }
