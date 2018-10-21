@@ -27,6 +27,7 @@ public class WarpManager {
 		this.plugin = plugin;
 		this.cc = new CustomConfig(this.plugin);
 		this.m = new Message(this.plugin);
+		putRestricted();
 		try {
 			loadWarps();
 		} catch (NullPointerException e) {
@@ -61,6 +62,11 @@ public class WarpManager {
 		if(this.restricted.contains(name.toLowerCase())){
 			String text = MessageManager.getString("warpNameRestricted");
 			throw new PlayerWarpException(m.tl(text,name));
+		}
+		String pat = "^[\\p{L}0-9]*$";
+		if(!name.matches(pat)){
+			String text = MessageManager.getString("warpNameWithIllegalChars");
+			throw new PlayerWarpException(text);
 		}
 		String uuid = owner.getUniqueId().toString();
 		if(this.warps.containsKey(owner)){
@@ -97,12 +103,15 @@ public class WarpManager {
 			String text = MessageManager.getString("notOwnerOfWarp");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
-		boolean success = warps.remove(warpowner, warp);
+		ArrayList<String> olist = new ArrayList<String>();
+		olist.addAll(warps.get(owner));
+		boolean success = olist.remove(warp);
 		if(!success){
 			String msg = MessageManager.getString("warpRemoveError");
 			msg = m.tl(msg,warp);
 			user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 		} else {
+			warps.put(owner, olist);
 			cc.getConfig(warpowner).set("warps."+warp, null);
 			cc.saveConfig(warpowner);
 			String msg = "";
@@ -117,7 +126,7 @@ public class WarpManager {
 		}
 	}
 	public Player getWarpOwner(String warp) throws PlayerWarpException{
-		if(!this.warps.containsValue(warp)){
+		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
@@ -130,7 +139,7 @@ public class WarpManager {
 		return null;
 	}
 	public Location getWarpLocation(String warp) throws PlayerWarpException{
-		if(!this.warps.containsValue(warp)){
+		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
@@ -144,12 +153,10 @@ public class WarpManager {
 		}
 		return null;
 	}
-	public void putRestricted(){
-		restricted.add("create");
-		restricted.add("remove");
-		restricted.add("list");
-		restricted.add("reload");
-		restricted.add("updatemsg");
+	private void putRestricted(){
+		List<String> list = plugin.getConfig().getStringList("restricted");
+		if(list != null)
+			restricted.addAll(list);
 	}
 	public void loadWarps() throws NullPointerException,PlayerWarpException {
 		if(!this.warps.isEmpty()){

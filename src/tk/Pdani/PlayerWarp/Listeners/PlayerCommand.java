@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -43,6 +44,19 @@ public class PlayerCommand implements CommandExecutor {
 					if(list.equals(""))
 						list = MessageManager.getString("none");
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), list)));
+				} else if(args[0].equalsIgnoreCase("listown")){
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					Player player = (Player) sender;
+					String list = "";
+					for(String w : wm.getPlayerWarps(player)){
+						list += (list.equals("")) ? w : ", "+w;
+					}
+					if(list.equals(""))
+						list = MessageManager.getString("none");
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("ownWarps"), list)));
 				} else if(args[0].equalsIgnoreCase("create")){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
@@ -83,7 +97,29 @@ public class PlayerCommand implements CommandExecutor {
 					File f = new File(plugin.getDataFolder(),"messages.properties");
 					Main.updateMsg(f, is);
 				} else {
-					sendHelp(sender,commandLabel,HelpType.ALL);
+					if(!(sender instanceof Player)){
+						sender.sendMessage(ChatColor.RED + "Warping can only be used in-game!");
+						return true;
+					}
+					Player player = (Player) sender;
+					String warp = args[0];
+					if(!wm.isWarp(warp)){
+						String text = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warpNotFound"));
+						text = m.tl(text,warp);
+						sender.sendMessage(text);
+						return true;
+					}
+					Location loc = null;
+					try {
+						loc = wm.getWarpLocation(warp);
+					} catch (PlayerWarpException e) {
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						return true;
+					}
+					String text = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warping"));
+					text = m.tl(text,warp);
+					sender.sendMessage(text);
+					player.teleport(loc);
 				}
 			} else if(args.length == 2) {
 				if(args[0].equalsIgnoreCase("create")){
@@ -92,6 +128,14 @@ public class PlayerCommand implements CommandExecutor {
 						return true;
 					}
 					Player player = (Player) sender;
+					int limit = (sender.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(player);
+					int count = wm.getPlayerWarps(player).size();
+					if(limit != -1 && count >= limit){
+						String msg = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warpLimitReached"));
+						msg = m.tl(msg, limit);
+						sender.sendMessage(msg);
+						return true;
+					}
 					String warp = args[1];
 					try {
 						wm.addWarp(player, warp);
@@ -137,15 +181,19 @@ public class PlayerCommand implements CommandExecutor {
 				msg = m.tl(msg, count, limit);
 				sender.sendMessage(msg);
 			}
-			sender.sendMessage(ChatColor.GOLD + l(label)+"list");
+			sender.sendMessage(ChatColor.GOLD + l(label)+"list"+c("&7 - &6"+MessageManager.getString("help.list")));
+			if(sender.hasPermission("playerwarp.create") || sender.hasPermission("playerwarp.remove"))
+				sender.sendMessage(ChatColor.GOLD + l(label)+"listown"+c("&7 - &6"+MessageManager.getString("help.listown")));
 			if(sender.hasPermission("playerwarp.create"))
-				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>");
+				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>"+c("&7 - &6"+MessageManager.getString("help.create")));
 			if(sender.hasPermission("playerwarp.remove"))
-				sender.sendMessage(ChatColor.GOLD + l(label)+"remove <warp>");
+				sender.sendMessage(ChatColor.GOLD + l(label)+"remove <warp>"+c("&7 - &6"+MessageManager.getString("help.remove")));
 			if(sender.hasPermission("playerwarp.remove.others"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"remove <warp> [player]");
+				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"remove <warp> [player]"+c("&7 - &6"+MessageManager.getString("help.remove.others")));
 			if(sender.hasPermission("playerwarp.reload"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"reload");
+				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"reload"+c("&7 - &6"+MessageManager.getString("help.reload")));
+			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
+				sender.sendMessage(ChatColor.RED + l(label)+"updatemsg"+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
 		} else if(type == HelpType.CREATE){
 			if(sender.hasPermission("playerwarp.create")) {
 				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>");
@@ -165,6 +213,10 @@ public class PlayerCommand implements CommandExecutor {
 	
 	private String l(String label){
 		return "/"+label+" ";
+	}
+	
+	private String c(String msg){
+		return ChatColor.translateAlternateColorCodes('&', msg);
 	}
 	
 	public int getLimit(Player player, int defaultValue) {

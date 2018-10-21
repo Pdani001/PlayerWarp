@@ -1,2 +1,9 @@
 debug: false
 autoUpdateMessages: true
+restricted:
+  - create
+  - remove
+  - list
+  - listown
+  - reload
+  - updatemsg

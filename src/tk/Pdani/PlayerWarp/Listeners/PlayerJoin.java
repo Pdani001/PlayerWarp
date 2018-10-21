@@ -2,6 +2,7 @@ package tk.Pdani.PlayerWarp.Listeners;
 
 import java.util.logging.Level;
 
+import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -26,6 +27,9 @@ public class PlayerJoin implements Listener {
 			cc.saveConfig(uuid);
 			if(Main.isDebug()) plugin.getLogger().log(Level.INFO, "Player file created for "+ev.getPlayer().getName());
 		}
+		String name = "["+plugin.getDescription().getName()+"] ";
+		if(Main.msgUpdate && ev.getPlayer().hasPermission("playerwarp.reload"))
+			ev.getPlayer().sendMessage(ChatColor.RED + name + "A new messages.properties file is available! You can update it with /playerwarp updatemsg");
 	}
 
 }
