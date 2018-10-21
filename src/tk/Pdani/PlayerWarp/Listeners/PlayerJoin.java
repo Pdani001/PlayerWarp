@@ -24,7 +24,7 @@ public class PlayerJoin implements Listener {
 		if(!cc.hasConfig(uuid)){
 			cc.getConfig(uuid).set("warps", new String[0]);
 			cc.saveConfig(uuid);
-			if(Main.isDebug()) plugin.getLogger().log(Level.INFO, "Player file created");
+			if(Main.isDebug()) plugin.getLogger().log(Level.INFO, "Player file created for "+ev.getPlayer().getName());
 		}
 	}
 

@@ -32,9 +32,19 @@ public class WarpManager {
 		List<String> warps = this.getWarpList().get(owner);
 		return (warps == null) ? empty : warps;
 	}
+	public boolean isWarp(String warp){
+		for(List<String> wl : this.warps.values()){
+			for(String w : wl){
+				if(w.equals(warp)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 	public void addWarp(Player owner, String name) throws PlayerWarpException{
-		if(this.warps.containsValue(name)){
-			String text = MessageManager.getString("warpAlreadyExists");
+		if(isWarp(name)){
+			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,name));
 		}
 		if(this.restricted.contains(name)){
@@ -55,12 +65,12 @@ public class WarpManager {
 		cc.getConfig(uuid).set("warps."+name+".location", owner.getLocation());
 		cc.saveConfig(uuid);
 		
-		String msg = MessageManager.getString("warpRemoved");
+		String msg = MessageManager.getString("warpCreated");
 		msg = m.tl(msg,name);
 		owner.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 	}
 	public void delWarp(Player user, String warp) throws PlayerWarpException{
-		if(!this.warps.containsValue(warp)){
+		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}

@@ -6,10 +6,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
@@ -87,6 +92,15 @@ public class Main extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(pj, this);
 		this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
+		List<Player> players = getOnlinePlayers();
+		for(Player p : players){
+			String uuid = p.getUniqueId().toString();
+			if(!cc.hasConfig(uuid)){
+				cc.getConfig(uuid).set("warps", new String[0]);
+				cc.saveConfig(uuid);
+				if(isDebug()) getLogger().log(Level.INFO, "Player file created for "+p.getName());
+			}
+		}
 	}
 	public void onDisable(){
 		getLogger().log(Level.INFO, "Plugin disabled.");
@@ -95,6 +109,36 @@ public class Main extends JavaPlugin {
 	public static boolean isDebug(){
 		return debug;
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static List<Player> getOnlinePlayers(){
+		ArrayList<Player> players = new ArrayList<Player>();
+		Collection<? extends Player> collectionList = null;
+		Player[] playerList = null;
+		boolean isOldClass = false;
+		try {
+		    if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class) {
+		    	collectionList = ((Collection<? extends Player>)Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]));
+		    } else {
+		    	playerList = ((Player[])Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]));
+		    	isOldClass = true;
+		    }
+		} catch (Exception ex) {
+			ex.printStackTrace(); // will probably never print
+			return players;
+		}
+		if(isOldClass){
+			for(Player player : playerList){
+				players.add(player);
+			}
+		} else {
+			for(Player player : collectionList){
+				players.add(player);
+			}
+		}
+		return players;
+	}
+	
 	private void saveResource(String name, File outFile) {
 	    try (InputStream in = this.getResource(
 	            name);
