@@ -71,6 +71,8 @@ public class PlayerCommand implements CommandExecutor {
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 					}
 					plugin.reloadConfig();
+					String msg = m.tl(MessageManager.getString("reload"), "v"+plugin.getDescription().getVersion());
+					sender.sendMessage(ChatColor.RED + msg);
 				} else if(Main.msgUpdate && args[0].equalsIgnoreCase("updateMsg")){
 					if(!sender.hasPermission("playerwarp.reload")){
 						sendHelp(sender,commandLabel,HelpType.ALL);
