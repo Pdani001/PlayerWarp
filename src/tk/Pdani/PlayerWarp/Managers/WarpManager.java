@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.UUID;
 
 import org.bukkit.ChatColor;
@@ -12,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import tk.Pdani.PlayerWarp.Main;
 import tk.Pdani.PlayerWarp.Message;
 import tk.Pdani.PlayerWarp.PlayerWarpException;
 
@@ -25,6 +27,13 @@ public class WarpManager {
 		this.plugin = plugin;
 		this.cc = new CustomConfig(this.plugin);
 		this.m = new Message(this.plugin);
+		try {
+			loadWarps();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} catch (PlayerWarpException e) {
+			if(Main.isDebug()) plugin.getLogger().log(Level.WARNING, e.getMessage());
+		}
 	}
 	public HashMap<Player,List<String>> getWarpList(){
 		return this.warps;
@@ -49,7 +58,7 @@ public class WarpManager {
 			String text = MessageManager.getString("warpAlreadyExists");
 			throw new PlayerWarpException(m.tl(text,name));
 		}
-		if(this.restricted.contains(name)){
+		if(this.restricted.contains(name.toLowerCase())){
 			String text = MessageManager.getString("warpNameRestricted");
 			throw new PlayerWarpException(m.tl(text,name));
 		}
@@ -76,7 +85,7 @@ public class WarpManager {
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
-		if(this.restricted.contains(warp)){
+		if(this.restricted.contains(warp.toLowerCase())){
 			String text = MessageManager.getString("warpNameRestricted");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
@@ -139,6 +148,8 @@ public class WarpManager {
 		restricted.add("create");
 		restricted.add("remove");
 		restricted.add("list");
+		restricted.add("reload");
+		restricted.add("updatemsg");
 	}
 	public void loadWarps() throws NullPointerException,PlayerWarpException {
 		if(!this.warps.isEmpty()){

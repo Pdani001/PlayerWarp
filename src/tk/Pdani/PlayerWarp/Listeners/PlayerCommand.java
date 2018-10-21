@@ -1,5 +1,7 @@
 package tk.Pdani.PlayerWarp.Listeners;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -11,6 +13,7 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import tk.Pdani.PlayerWarp.HelpType;
+import tk.Pdani.PlayerWarp.Main;
 import tk.Pdani.PlayerWarp.Message;
 import tk.Pdani.PlayerWarp.PlayerWarpException;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
@@ -52,6 +55,30 @@ public class PlayerCommand implements CommandExecutor {
 						return true;
 					}
 					sendHelp(sender,commandLabel,HelpType.REMOVE);
+				} else if(args[0].equalsIgnoreCase("reload")){
+					if(!sender.hasPermission("playerwarp.reload")){
+						String noPerm = MessageManager.getString("NoPerm");
+						sender.sendMessage(ChatColor.RED + noPerm);
+						return true;
+					}
+					try {
+						wm.reloadWarps();
+					} catch (NullPointerException e) {
+						e.printStackTrace();
+						return false;
+					} catch (PlayerWarpException e) {
+						String msg = m.tl(MessageManager.getString("errorWithMsg"), e.getMessage());
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+					}
+					plugin.reloadConfig();
+				} else if(Main.msgUpdate && args[0].equalsIgnoreCase("updateMsg")){
+					if(!sender.hasPermission("playerwarp.reload")){
+						sendHelp(sender,commandLabel,HelpType.ALL);
+						return true;
+					}
+					InputStream is = plugin.getResource("messages.properties");
+					File f = new File(plugin.getDataFolder(),"messages.properties");
+					Main.updateMsg(f, is);
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -72,6 +99,13 @@ public class PlayerCommand implements CommandExecutor {
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
 						return true;
+					}
+					Player player = (Player) sender;
+					String warp = args[1];
+					try {
+						wm.delWarp(player, warp);
+					} catch (PlayerWarpException e) {
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
 					}
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
@@ -106,7 +140,9 @@ public class PlayerCommand implements CommandExecutor {
 			if(sender.hasPermission("playerwarp.remove"))
 				sender.sendMessage(ChatColor.GOLD + l(label)+"remove <warp>");
 			if(sender.hasPermission("playerwarp.remove.others"))
-				sender.sendMessage(ChatColor.YELLOW + l(label)+"remove <warp> [player]");
+				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"remove <warp> [player]");
+			if(sender.hasPermission("playerwarp.reload"))
+				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"reload");
 		} else if(type == HelpType.CREATE){
 			if(sender.hasPermission("playerwarp.create")) {
 				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>");

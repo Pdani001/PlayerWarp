@@ -1,6 +1,6 @@
 name: PlayerWarp
 main: tk.Pdani.PlayerWarp.Main
-version: 0.3.5
+version: 0.4.0
 author: Pdani001
 description: Adds the ability for players to create their own warps
 website: https://pdani.tk/
@@ -26,6 +26,9 @@ permissions:
   playerwarp.limit.unlimited:
     description: Permission to create unlimited warps
     default: false
+  playerwarp.reload:
+    description: Permission to reload warps and config
+    default: false
   playerwarp.*:
     description: Give players with op everything by default
     default: op
@@ -34,3 +37,4 @@ permissions:
       playerwarp.remove: true
       playerwarp.remove.others: true
       playerwarp.limit.unlimited: true
+      playerwarp.reload: true

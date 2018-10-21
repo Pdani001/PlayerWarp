@@ -21,12 +21,16 @@ import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
 import tk.Pdani.PlayerWarp.Listeners.PlayerJoin;
 import tk.Pdani.PlayerWarp.Managers.CustomConfig;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
-import tk.Pdani.PlayerWarp.Managers.WarpManager;
 
 public class Main extends JavaPlugin {
 	private CustomConfig cc = null;
 	private static boolean debug = false;
+	public static boolean msgUpdate = false;
+	private static JavaPlugin instance = null;
+	private static Main main = null;
 	public void onEnable(){
+		instance = this;
+		main = this;
 		
 		getConfig().options().copyDefaults(true);
 		saveDefaultConfig();
@@ -66,23 +70,12 @@ public class Main extends JavaPlugin {
 			}
 			MessageManager.setProps(props);
 			String cv = MessageManager.getString("version", false);
-			if(cv == null || !cv.equals(version)){
-				try {
-					InputStream is2 = new FileInputStream(f);
-					if(is2 != is){
-						if(isDebug())getLogger().log(Level.INFO, "Saved updated messages.properties");
-						File oldF = new File(this.getDataFolder()+"/messages.properties");
-						File newF = new File(this.getDataFolder()+"/messages.old.properties");
-						if(newF.exists())
-							newF.delete();
-						if(oldF.renameTo(newF)) {
-							oldF.delete();
-							this.saveResource("messages.properties",f);
-						}
-					}
-					is2.close();
-				} catch (Exception e) {
-					e.printStackTrace(); // Will probably never print
+			if((cv == null || !cv.equals(version))){
+				if(getConfig().getBoolean("autoUpdateMessages", true)){
+					updateMsg(f,is);
+				} else {
+					msgUpdate = true;
+					getLogger().log(Level.WARNING, "A new messages.properties file is available! You can update it with /playerwarp updatemsg");
 				}
 			}
 		}
@@ -101,14 +94,6 @@ public class Main extends JavaPlugin {
 				cc.saveConfig(uuid);
 				if(isDebug()) getLogger().log(Level.INFO, "Player file created for "+p.getName());
 			}
-		}
-		WarpManager wm = new WarpManager(this);
-		try {
-			wm.loadWarps();
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-		} catch (PlayerWarpException e) {
-			if(isDebug()) getLogger().log(Level.WARNING, e.getMessage());
 		}
 	}
 	public void onDisable(){
@@ -146,6 +131,27 @@ public class Main extends JavaPlugin {
 			}
 		}
 		return players;
+	}
+	
+	public static void updateMsg(File f, InputStream is){
+		try {
+			InputStream is2 = new FileInputStream(f);
+			if(is2 != is){
+				if(isDebug())instance.getLogger().log(Level.INFO, "Saved updated messages.properties");
+				File oldF = new File(instance.getDataFolder()+"/messages.properties");
+				File newF = new File(instance.getDataFolder()+"/messages.old.properties");
+				if(newF.exists())
+					newF.delete();
+				if(oldF.renameTo(newF)) {
+					oldF.delete();
+					main.saveResource("messages.properties",f);
+				}
+			}
+			is2.close();
+			msgUpdate = false;
+		} catch (Exception e) {
+			e.printStackTrace(); // Will probably never print
+		}
 	}
 	
 	private void saveResource(String name, File outFile) {
