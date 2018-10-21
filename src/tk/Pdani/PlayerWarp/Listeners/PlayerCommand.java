@@ -181,6 +181,7 @@ public class PlayerCommand implements CommandExecutor {
 				msg = m.tl(msg, count, limit);
 				sender.sendMessage(msg);
 			}
+			sender.sendMessage(ChatColor.GOLD + l(label)+"<warp>"+c("&7 - &6"+MessageManager.getString("help.warp")));
 			sender.sendMessage(ChatColor.GOLD + l(label)+"list"+c("&7 - &6"+MessageManager.getString("help.list")));
 			if(sender.hasPermission("playerwarp.create") || sender.hasPermission("playerwarp.remove"))
 				sender.sendMessage(ChatColor.GOLD + l(label)+"listown"+c("&7 - &6"+MessageManager.getString("help.listown")));
