@@ -28,7 +28,9 @@ public class WarpManager {
 		return this.warps;
 	}
 	public List<String> getPlayerWarps(Player owner){
-		return this.getWarpList().get(owner);
+		List<String> empty = new ArrayList<String>();
+		List<String> warps = this.getWarpList().get(owner);
+		return (warps == null) ? empty : warps;
 	}
 	public void addWarp(Player owner, String name) throws PlayerWarpException{
 		if(this.warps.containsValue(name)){
