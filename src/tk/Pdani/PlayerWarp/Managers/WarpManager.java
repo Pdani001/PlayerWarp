@@ -15,6 +15,7 @@ import tk.Pdani.PlayerWarp.PlayerWarpException;
 
 public class WarpManager {
 	private HashMap<Player,List<String>> warps = new HashMap<Player,List<String>>();
+	private ArrayList<String> restricted = new ArrayList<String>();
 	private JavaPlugin plugin = null;
 	private CustomConfig cc = null;
 	private Message m = null;
@@ -34,6 +35,10 @@ public class WarpManager {
 			String text = MessageManager.getString("warpAlreadyExists");
 			throw new PlayerWarpException(m.tl(text,name));
 		}
+		if(this.restricted.contains(name)){
+			String text = MessageManager.getString("warpNameRestricted");
+			throw new PlayerWarpException(m.tl(text,name));
+		}
 		String uuid = owner.getUniqueId().toString();
 		if(this.warps.containsKey(owner)){
 			ArrayList<String> list = (ArrayList<String>) this.getPlayerWarps(owner);
@@ -51,6 +56,10 @@ public class WarpManager {
 	public void delWarp(Player user, String warp) throws PlayerWarpException{
 		if(!this.warps.containsValue(warp)){
 			String text = MessageManager.getString("warpNotFound");
+			throw new PlayerWarpException(m.tl(text,warp));
+		}
+		if(this.restricted.contains(warp)){
+			String text = MessageManager.getString("warpNameRestricted");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
 		String uuid = user.getUniqueId().toString();
@@ -105,5 +114,10 @@ public class WarpManager {
 			}
 		}
 		return null;
+	}
+	public void putRestricted(){
+		restricted.add("create");
+		restricted.add("remove");
+		restricted.add("list");
 	}
 }

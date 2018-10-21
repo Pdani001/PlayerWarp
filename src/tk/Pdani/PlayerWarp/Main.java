@@ -25,6 +25,8 @@ public class Main extends JavaPlugin {
 		getConfig().options().copyDefaults(true);
 		saveDefaultConfig();
 		
+		debug = this.getConfig().getBoolean("debug", false);
+		
 		/*
 		 * MESSAGE MANAGER LOADING
 		 */
@@ -79,7 +81,6 @@ public class Main extends JavaPlugin {
 			}
 		}
 		
-		debug = this.getConfig().getBoolean("debug", false);
 		this.cc = new CustomConfig(this);
 		PlayerJoin pj = new PlayerJoin(this,cc);
 		CommandExecutor cmdexec = new PlayerCommand(this);
