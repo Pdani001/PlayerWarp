@@ -44,7 +44,7 @@ public class PlayerCommand implements CommandExecutor {
 		CMD_RELOAD = plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
 		CMD_UPDATEMSG = plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
 		CMD_WARP = plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
-		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 0);
+		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 		
 	}
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
