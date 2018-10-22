@@ -267,11 +267,11 @@ public class PlayerCommand extends BukkitCommand {
 	
 	private boolean disallowWorld(Player player){
 		if(WORLDS_AS_BLACKLIST){
-			if(WORLDS.contains(player.getWorld())){
+			if(WORLDS.contains(player.getWorld().getName())){
 				return true;
 			}
 		} else {
-			if(!WORLDS.contains(player.getWorld())){
+			if(!WORLDS.contains(player.getWorld().getName())){
 				return true;
 			}
 		}
