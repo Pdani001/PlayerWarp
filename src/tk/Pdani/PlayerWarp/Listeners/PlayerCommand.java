@@ -2,6 +2,7 @@ package tk.Pdani.PlayerWarp.Listeners;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -32,23 +33,34 @@ public class PlayerCommand extends BukkitCommand {
 	private static String CMD_UPDATEMSG = "updatemsg";
 	private static String CMD_WARP = "<warp>";
 	private static String CMD_COLOR = "6";
+	private static boolean WORLDS_AS_BLACKLIST = true;
+	private static List<String> WORLDS = new ArrayList<String>();
 	public PlayerCommand(String name, JavaPlugin plugin, List<String> aliases){
 		super(name);
 		this.setAliases(aliases);
 		this.plugin = plugin;
 		this.wm = new WarpManager(this.plugin);
 		this.m = new Message(this.plugin);
-		CMD_LIST = plugin.getConfig().getString("cmdargs.list",CMD_LIST);
-		CMD_LISTOWN = plugin.getConfig().getString("cmdargs.listown",CMD_LISTOWN);
-		CMD_CREATE = plugin.getConfig().getString("cmdargs.create",CMD_CREATE);
-		CMD_REMOVE = plugin.getConfig().getString("cmdargs.remove",CMD_REMOVE);
-		CMD_RELOAD = plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
-		CMD_UPDATEMSG = plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
-		CMD_WARP = plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
-		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
-		
+		CMD_LIST = this.plugin.getConfig().getString("cmdargs.list",CMD_LIST);
+		CMD_LISTOWN = this.plugin.getConfig().getString("cmdargs.listown",CMD_LISTOWN);
+		CMD_CREATE = this.plugin.getConfig().getString("cmdargs.create",CMD_CREATE);
+		CMD_REMOVE = this.plugin.getConfig().getString("cmdargs.remove",CMD_REMOVE);
+		CMD_RELOAD = this.plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
+		CMD_UPDATEMSG = this.plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
+		CMD_WARP = this.plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
+		CMD_COLOR = this.plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
+		WORLDS = this.plugin.getConfig().getStringList("worlds");
+		WORLDS_AS_BLACKLIST = this.plugin.getConfig().getBoolean("worldsAsBlacklist",WORLDS_AS_BLACKLIST);
 	}
 	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+		if(sender instanceof Player){
+			Player player = (Player) sender;
+			if(disallowWorld(player)){
+				String noPerm = MessageManager.getString("worldDisallowed");
+				sender.sendMessage(ChatColor.RED + noPerm);
+				return true;
+			}
+		}
 			String noPerm = MessageManager.getString("noPerm");
 			if(!sender.hasPermission("playerwarp.use")){
 				sender.sendMessage(ChatColor.RED + noPerm);
@@ -251,6 +263,19 @@ public class PlayerCommand extends BukkitCommand {
 				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}
 		}
+	}
+	
+	private boolean disallowWorld(Player player){
+		if(WORLDS_AS_BLACKLIST){
+			if(WORLDS.contains(player.getWorld())){
+				return true;
+			}
+		} else {
+			if(!WORLDS.contains(player.getWorld())){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	private String l(String label){

@@ -4,6 +4,10 @@ aliases:
   - playerw
 debug: false
 autoUpdateMessages: true
+worldsAsBlacklist: true
+worlds:
+  - world_the_end
+  - world_nether
 restricted:
   - create
   - remove
