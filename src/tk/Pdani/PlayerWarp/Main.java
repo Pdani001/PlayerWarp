@@ -36,6 +36,10 @@ public class Main extends JavaPlugin {
 		saveDefaultConfig();
 		
 		debug = this.getConfig().getBoolean("debug", false);
+		List<String> aliases = this.getConfig().getStringList("aliases");
+		if(aliases == null){
+			aliases = new ArrayList<String>();
+		}
 		
 		reloadMessages();
 		
@@ -44,6 +48,7 @@ public class Main extends JavaPlugin {
 		CommandExecutor cmdexec = new PlayerCommand(this);
 		getServer().getPluginManager().registerEvents(pj, this);
 		this.getCommand("playerwarp").setExecutor(cmdexec);
+		this.getCommand("playerwarp").setAliases(aliases);
 		getLogger().log(Level.INFO, "Plugin enabled.");
 		List<Player> players = getOnlinePlayers();
 		for(Player p : players){

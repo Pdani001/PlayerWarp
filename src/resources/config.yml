@@ -1,3 +1,7 @@
+aliases:
+  - pw
+  - pwarp
+  - playerw
 debug: false
 autoUpdateMessages: true
 restricted:
@@ -7,3 +11,12 @@ restricted:
   - listown
   - reload
   - updatemsg
+cmdcolor: 6
+cmdargs:
+  create: create
+  remove: remove
+  list: list
+  listown: listown
+  reload: reload
+  updatemsg: updatemsg
+  warp: '<warp>'
