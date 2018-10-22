@@ -6,9 +6,8 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,7 +19,7 @@ import tk.Pdani.PlayerWarp.PlayerWarpException;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
 import tk.Pdani.PlayerWarp.Managers.WarpManager;
 
-public class PlayerCommand implements CommandExecutor {
+public class PlayerCommand extends BukkitCommand {
 	private JavaPlugin plugin = null;
 	private WarpManager wm = null;
 	private Message m = null;
@@ -33,7 +32,9 @@ public class PlayerCommand implements CommandExecutor {
 	private static String CMD_UPDATEMSG = "updatemsg";
 	private static String CMD_WARP = "<warp>";
 	private static String CMD_COLOR = "6";
-	public PlayerCommand(JavaPlugin plugin){
+	public PlayerCommand(String name, JavaPlugin plugin, List<String> aliases){
+		super(name);
+		this.setAliases(aliases);
 		this.plugin = plugin;
 		this.wm = new WarpManager(this.plugin);
 		this.m = new Message(this.plugin);
@@ -47,8 +48,7 @@ public class PlayerCommand implements CommandExecutor {
 		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 		
 	}
-	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-		if(cmd.getName().equalsIgnoreCase("playerwarp")){
+	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
 			String noPerm = MessageManager.getString("noPerm");
 			if(!sender.hasPermission("playerwarp.use")){
 				sender.sendMessage(ChatColor.RED + noPerm);
@@ -100,6 +100,7 @@ public class PlayerCommand implements CommandExecutor {
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 					}
 					plugin.reloadConfig();
+					reloadMsg();
 					String msg = m.tl(MessageManager.getString("reload"), "v"+plugin.getDescription().getVersion());
 					sender.sendMessage(ChatColor.RED + msg);
 				} else if(Main.msgUpdate && args[0].equalsIgnoreCase(CMD_UPDATEMSG)){
@@ -197,8 +198,17 @@ public class PlayerCommand implements CommandExecutor {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
 			}
-		}
 		return true;
+	}
+	private void reloadMsg(){
+		CMD_LIST = plugin.getConfig().getString("cmdargs.list",CMD_LIST);
+		CMD_LISTOWN = plugin.getConfig().getString("cmdargs.listown",CMD_LISTOWN);
+		CMD_CREATE = plugin.getConfig().getString("cmdargs.create",CMD_CREATE);
+		CMD_REMOVE = plugin.getConfig().getString("cmdargs.remove",CMD_REMOVE);
+		CMD_RELOAD = plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
+		CMD_UPDATEMSG = plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
+		CMD_WARP = plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
+		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 	}
 	public void sendHelp(CommandSender sender, String label, HelpType type){
 		String noPerm = MessageManager.getString("noPerm");
@@ -217,28 +227,28 @@ public class PlayerCommand implements CommandExecutor {
 				sender.sendMessage(msg);
 			}
 			sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.warp")));
-			sender.sendMessage(ChatColor.GOLD + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
+			sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
 			if(sender.hasPermission("playerwarp.create") || sender.hasPermission("playerwarp.remove"))
-				sender.sendMessage(ChatColor.GOLD + l(label)+CMD_LISTOWN+c("&7 - &6"+MessageManager.getString("help.listown")));
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LISTOWN+c("&7 - &6"+MessageManager.getString("help.listown")));
 			if(sender.hasPermission("playerwarp.create"))
-				sender.sendMessage(ChatColor.GOLD + l(label)+CMD_CREATE + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.create")));
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.create")));
 			if(sender.hasPermission("playerwarp.remove"))
-				sender.sendMessage(ChatColor.GOLD + l(label)+CMD_REMOVE+" "+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.remove")));
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.remove")));
 			if(sender.hasPermission("playerwarp.reload"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
+				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
 			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
-				sender.sendMessage(ChatColor.RED + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
+				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
 		} else if(type == HelpType.CREATE){
 			if(sender.hasPermission("playerwarp.create")) {
-				sender.sendMessage(ChatColor.GOLD + l(label)+CMD_CREATE+" "+CMD_WARP);
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE+" "+CMD_WARP);
 			} else {
-				sender.sendMessage(ChatColor.RED + noPerm);
+				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}
 		} else if(type == HelpType.REMOVE){
 			if(sender.hasPermission("playerwarp.remove")) {
-				sender.sendMessage(ChatColor.GOLD + l(label)+CMD_REMOVE+" "+CMD_WARP);
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP);
 			} else {
-				sender.sendMessage(ChatColor.RED + noPerm);
+				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}
 		}
 	}
@@ -268,7 +278,7 @@ public class PlayerCommand implements CommandExecutor {
 		return getLimit(player,0);
 	}
 	
-	public void warpList(CommandSender sender, int page){
+	private void warpList(CommandSender sender, int page){
 		List<String> list = wm.getWarps();
 		final int maxPages = (int) Math.ceil(list.size() / (double) WARPS_PER_PAGE);
 

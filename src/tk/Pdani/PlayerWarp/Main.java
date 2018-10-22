@@ -6,14 +6,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,6 +32,8 @@ public class Main extends JavaPlugin {
 	public static boolean msgUpdate = false;
 	private static JavaPlugin instance = null;
 	private static Main main = null;
+	private List<String> aliases = null;
+	
 	public void onEnable(){
 		instance = this;
 		main = this;
@@ -36,19 +42,28 @@ public class Main extends JavaPlugin {
 		saveDefaultConfig();
 		
 		debug = this.getConfig().getBoolean("debug", false);
-		List<String> aliases = this.getConfig().getStringList("aliases");
+		aliases = this.getConfig().getStringList("aliases");
 		if(aliases == null){
 			aliases = new ArrayList<String>();
 		}
+		
+		
+		Command cmdexec = new PlayerCommand("playerwarp",this,aliases);
+		
+		Field bukkitCommandMap;
+		try {
+			bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+			bukkitCommandMap.setAccessible(true);
+			CommandMap commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
+			commandMap.register("playerwarp", cmdexec);
+		} catch (Exception e) {}
 		
 		reloadMessages();
 		
 		this.cc = new CustomConfig(this);
 		PlayerJoin pj = new PlayerJoin(this,cc);
-		CommandExecutor cmdexec = new PlayerCommand(this);
 		getServer().getPluginManager().registerEvents(pj, this);
-		this.getCommand("playerwarp").setAliases(aliases);
-		this.getCommand("playerwarp").setExecutor(cmdexec);
+		//this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
 		List<Player> players = getOnlinePlayers();
 		for(Player p : players){
@@ -62,6 +77,33 @@ public class Main extends JavaPlugin {
 	}
 	public void onDisable(){
 		getLogger().log(Level.INFO, "Plugin disabled.");
+		unRegisterBukkitCommand("playerwarp",aliases);
+	}
+	
+	private static Object getPrivateField(Object object, String field)throws SecurityException,
+	    NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+	    Class<?> clazz = object.getClass();
+	    Field objectField = clazz.getDeclaredField(field);
+	    objectField.setAccessible(true);
+	    Object result = objectField.get(object);
+	    objectField.setAccessible(false);
+	    return result;
+	}
+	
+	public void unRegisterBukkitCommand(String cmd, List<String> aliases) {
+	    try {
+	        Object result = getPrivateField(Bukkit.getServer().getPluginManager(), "commandMap");
+	        SimpleCommandMap commandMap = (SimpleCommandMap) result;
+	        Object map = getPrivateField(commandMap, "knownCommands");
+	        @SuppressWarnings("unchecked")
+	        HashMap<String, Command> knownCommands = (HashMap<String, Command>) map;
+	        knownCommands.remove(cmd);
+	        for (String alias : aliases){
+	           if(knownCommands.containsKey(alias) && knownCommands.get(alias).toString().contains(this.getName())){
+	                knownCommands.remove(alias);
+	            }
+	        }
+	    } catch (Exception e) {}
 	}
 	
 	public static boolean isDebug(){

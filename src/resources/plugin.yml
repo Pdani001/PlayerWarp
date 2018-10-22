@@ -1,14 +1,10 @@
 name: PlayerWarp
 main: tk.Pdani.PlayerWarp.Main
-version: 0.5.2
+version: 0.6.0
 author: Pdani001
 description: Adds the ability for players to create their own warps
 website: https://pdani.tk/
 softdepend: [Vault]
-commands:
-  playerwarp:
-    description: PlayerWarp command
-    usage: /<command> [args...]
 permissions:
   playerwarp.use:
     description: Permission to use player warps
