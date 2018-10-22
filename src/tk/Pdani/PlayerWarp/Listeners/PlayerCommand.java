@@ -32,6 +32,11 @@ public class PlayerCommand implements CommandExecutor {
 	}
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		if(cmd.getName().equalsIgnoreCase("playerwarp")){
+			String noPerm = MessageManager.getString("noPerm");
+			if(!sender.hasPermission("playerwarp.use")){
+				sender.sendMessage(ChatColor.RED + noPerm);
+				return true;
+			}
 			if(args.length == 0){
 				sendHelp(sender,commandLabel,HelpType.ALL);
 			} else if(args.length == 1){
@@ -64,7 +69,6 @@ public class PlayerCommand implements CommandExecutor {
 					sendHelp(sender,commandLabel,HelpType.REMOVE);
 				} else if(args[0].equalsIgnoreCase("reload")){
 					if(!sender.hasPermission("playerwarp.reload")){
-						String noPerm = MessageManager.getString("NoPerm");
 						sender.sendMessage(ChatColor.RED + noPerm);
 						return true;
 					}
@@ -172,11 +176,7 @@ public class PlayerCommand implements CommandExecutor {
 		return true;
 	}
 	public void sendHelp(CommandSender sender, String label, HelpType type){
-		String noPerm = MessageManager.getString("NoPerm");
-		if(!sender.hasPermission("playerwarp.use")){
-			sender.sendMessage(ChatColor.RED + noPerm);
-			return;
-		}
+		String noPerm = MessageManager.getString("noPerm");
 		if(type == HelpType.ALL){
 			String plugin_author = plugin.getDescription().getAuthors().get(0);
 			String plugin_name = plugin.getName();
