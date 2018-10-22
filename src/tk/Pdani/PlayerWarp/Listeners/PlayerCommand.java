@@ -125,6 +125,10 @@ public class PlayerCommand implements CommandExecutor {
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
 						return true;
 					}
+					if(!sender.hasPermission("playerwarp.create")){
+						sender.sendMessage(ChatColor.RED + noPerm);
+						return true;
+					}
 					Player player = (Player) sender;
 					int limit = (sender.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(player);
 					int count = wm.getPlayerWarps(player).size();
@@ -143,6 +147,10 @@ public class PlayerCommand implements CommandExecutor {
 				} else if(args[0].equalsIgnoreCase("remove")){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					if(!sender.hasPermission("playerwarp.remove")){
+						sender.sendMessage(ChatColor.RED + noPerm);
 						return true;
 					}
 					Player player = (Player) sender;
