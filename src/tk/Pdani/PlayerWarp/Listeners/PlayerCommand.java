@@ -253,10 +253,12 @@ public class PlayerCommand implements CommandExecutor {
             page = maxPages;
         }
         String warps = "";
-        final int warpPage = (page - 1) * WARPS_PER_PAGE;
-        List <String> view = list.subList(warpPage, warpPage + Math.min(list.size() - warpPage, WARPS_PER_PAGE));
-        for(String w : view){
-        	warps += (warps.equals("")) ? w : ", "+w;
+        if(list.size() > 0){
+	        final int warpPage = (page - 1) * WARPS_PER_PAGE;
+	        List <String> view = list.subList(warpPage, warpPage + Math.min(list.size() - warpPage, WARPS_PER_PAGE));
+	        for(String w : view){
+	        	warps += (warps.equals("")) ? w : ", "+w;
+	        }
         }
         if(warps.equals(""))
         	warps = MessageManager.getString("none");
