@@ -170,4 +170,15 @@ public class Main extends JavaPlugin {
 	        ex.printStackTrace();
 	    }
 	}
+	
+	public static boolean isInt(String s) {
+	    try { 
+	        Integer.parseInt(s); 
+	    } catch(NumberFormatException e) { 
+	        return false; 
+	    } catch(NullPointerException e) {
+	        return false;
+	    }
+	    return true;
+	}
 }

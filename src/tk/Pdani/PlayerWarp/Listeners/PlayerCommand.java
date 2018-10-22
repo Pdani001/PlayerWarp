@@ -24,6 +24,7 @@ public class PlayerCommand implements CommandExecutor {
 	private JavaPlugin plugin = null;
 	private WarpManager wm = null;
 	private Message m = null;
+	private static final int WARPS_PER_PAGE = 10;
 	public PlayerCommand(JavaPlugin plugin){
 		this.plugin = plugin;
 		this.wm = new WarpManager(this.plugin);
@@ -35,15 +36,7 @@ public class PlayerCommand implements CommandExecutor {
 				sendHelp(sender,commandLabel,HelpType.ALL);
 			} else if(args.length == 1){
 				if(args[0].equalsIgnoreCase("list")){
-					String list = "";
-					for(List<String> wl : wm.getWarpList().values()){
-						for(String w : wl){
-							list += (list.equals("")) ? w : ", "+w;
-						}
-					}
-					if(list.equals(""))
-						list = MessageManager.getString("none");
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), list)));
+					warpList(sender,1);
 				} else if(args[0].equalsIgnoreCase("listown")){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
@@ -96,6 +89,7 @@ public class PlayerCommand implements CommandExecutor {
 					InputStream is = plugin.getResource("messages.properties");
 					File f = new File(plugin.getDataFolder(),"messages.properties");
 					Main.updateMsg(f, is);
+					Main.reloadMessages();
 				} else {
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "Warping can only be used in-game!");
@@ -154,6 +148,22 @@ public class PlayerCommand implements CommandExecutor {
 					} catch (PlayerWarpException e) {
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
 					}
+				} else if(args[0].equalsIgnoreCase("list")){
+					int page = 1;
+			        if (Main.isInt(args[1])) {
+			            page = Integer.parseInt(args[1]);
+			        }
+					warpList(sender,page);
+				} else {
+					sendHelp(sender,commandLabel,HelpType.ALL);
+				}
+			} else {
+				if(args[0].equalsIgnoreCase("list")){
+					int page = 1;
+			        if (Main.isInt(args[1])) {
+			            page = Integer.parseInt(args[1]);
+			        }
+					warpList(sender,page);
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -189,8 +199,6 @@ public class PlayerCommand implements CommandExecutor {
 				sender.sendMessage(ChatColor.GOLD + l(label)+"create <warp>"+c("&7 - &6"+MessageManager.getString("help.create")));
 			if(sender.hasPermission("playerwarp.remove"))
 				sender.sendMessage(ChatColor.GOLD + l(label)+"remove <warp>"+c("&7 - &6"+MessageManager.getString("help.remove")));
-			if(sender.hasPermission("playerwarp.remove.others"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"remove <warp> [player]"+c("&7 - &6"+MessageManager.getString("help.remove.others")));
 			if(sender.hasPermission("playerwarp.reload"))
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + l(label)+"reload"+c("&7 - &6"+MessageManager.getString("help.reload")));
 			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
@@ -235,5 +243,23 @@ public class PlayerCommand implements CommandExecutor {
 	
 	public int getLimit(Player player) {
 		return getLimit(player,0);
+	}
+	
+	public void warpList(CommandSender sender, int page){
+		List<String> list = wm.getWarps();
+		final int maxPages = (int) Math.ceil(list.size() / (double) WARPS_PER_PAGE);
+
+        if (page > maxPages) {
+            page = maxPages;
+        }
+        String warps = "";
+        final int warpPage = (page - 1) * WARPS_PER_PAGE;
+        List <String> view = list.subList(warpPage, warpPage + Math.min(list.size() - warpPage, WARPS_PER_PAGE));
+        for(String w : view){
+        	warps += (warps.equals("")) ? w : ", "+w;
+        }
+        if(warps.equals(""))
+        	warps = MessageManager.getString("none");
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), page, maxPages, warps)));
 	}
 }

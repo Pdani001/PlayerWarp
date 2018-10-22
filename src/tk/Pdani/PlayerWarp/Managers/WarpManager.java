@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,7 +19,7 @@ import tk.Pdani.PlayerWarp.Message;
 import tk.Pdani.PlayerWarp.PlayerWarpException;
 
 public class WarpManager {
-	private HashMap<Player,List<String>> warps = new HashMap<Player,List<String>>();
+	private HashMap<OfflinePlayer,List<String>> warps = new HashMap<OfflinePlayer,List<String>>();
 	private ArrayList<String> restricted = new ArrayList<String>();
 	private JavaPlugin plugin = null;
 	private CustomConfig cc = null;
@@ -36,10 +37,19 @@ public class WarpManager {
 			if(Main.isDebug()) plugin.getLogger().log(Level.WARNING, e.getMessage());
 		}
 	}
-	public HashMap<Player,List<String>> getWarpList(){
+	public HashMap<OfflinePlayer,List<String>> getWarpList(){
 		return this.warps;
 	}
-	public List<String> getPlayerWarps(Player owner){
+	public List<String> getWarps(){
+		ArrayList<String> list = new ArrayList<String>();
+		for(List<String> wl : this.warps.values()){
+			for(String w : wl){
+				list.add(w);
+			}
+		}
+		return list;
+	}
+	public List<String> getPlayerWarps(OfflinePlayer owner){
 		List<String> empty = new ArrayList<String>();
 		List<String> warps = this.getWarpList().get(owner);
 		return (warps == null) ? empty : warps;
@@ -96,7 +106,7 @@ public class WarpManager {
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
 		String uuid = user.getUniqueId().toString();
-		Player owner = this.getWarpOwner(warp);
+		OfflinePlayer owner = this.getWarpOwner(warp);
 		String warpowner = owner.getUniqueId().toString();
 		boolean isOwner = (warpowner != null && warpowner.equals(uuid));
 		if(!isOwner && !user.hasPermission("playerwarp.remove.others")){
@@ -125,14 +135,14 @@ public class WarpManager {
 			user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 		}
 	}
-	public Player getWarpOwner(String warp) throws PlayerWarpException{
+	public OfflinePlayer getWarpOwner(String warp) throws PlayerWarpException{
 		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
-		for(Entry<Player, List<String>> entry : warps.entrySet()){
+		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
 			if(entry.getValue().contains(warp)){
-				Player warpowner = entry.getKey();
+				OfflinePlayer warpowner = entry.getKey();
 				return warpowner;
 			}
 		}
@@ -143,7 +153,7 @@ public class WarpManager {
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
-		for(Entry<Player, List<String>> entry : warps.entrySet()){
+		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
 			if(entry.getValue().contains(warp)){
 				String uuid = entry.getKey().getUniqueId().toString();
 				Object l = cc.getConfig(uuid).get("warps."+warp+".location");
@@ -174,15 +184,18 @@ public class WarpManager {
 				} else {
 					continue;
 				}
+				cc.reloadConfig(uuid);
 				if(cc.getConfig(uuid).isConfigurationSection("warps")){
 					for(String k : cc.getConfig(uuid).getConfigurationSection("warps").getKeys(false)){
 						wl.add(k);
 					}
 					Player player = plugin.getServer().getPlayer(UUID.fromString(uuid));
 					if(player == null){
-						throw new NullPointerException("Player is null!!");
+						OfflinePlayer offp = plugin.getServer().getOfflinePlayer(UUID.fromString(uuid));
+						this.warps.put(offp, wl);
+					} else {
+						this.warps.put(player, wl);
 					}
-					this.warps.put(player, wl);
 				}
 			}
 		} else {

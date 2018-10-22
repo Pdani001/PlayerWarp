@@ -19,13 +19,10 @@ public class CustomConfig {
 	}
 	
 	public void reloadConfig(String name) {
-		if (filelist.get(name) == null) {
-			File ccf = new File(main.getDataFolder(), "./players/"+name+".yml");
-			filelist.put(name, ccf);
-		}
-		if (conflist.get(name) == null) {
-			conflist.put(name, YamlConfiguration.loadConfiguration(filelist.get(name)));
-		}
+		File ccf = new File(main.getDataFolder(), "./players/"+name+".yml");
+		filelist.put(name, ccf);
+		
+		conflist.put(name, YamlConfiguration.loadConfiguration(filelist.get(name)));
 	}
 	
 	public FileConfiguration getConfig(String name) {
