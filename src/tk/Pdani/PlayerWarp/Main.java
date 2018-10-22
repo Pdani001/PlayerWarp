@@ -47,8 +47,8 @@ public class Main extends JavaPlugin {
 		PlayerJoin pj = new PlayerJoin(this,cc);
 		CommandExecutor cmdexec = new PlayerCommand(this);
 		getServer().getPluginManager().registerEvents(pj, this);
-		this.getCommand("playerwarp").setExecutor(cmdexec);
 		this.getCommand("playerwarp").setAliases(aliases);
+		this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
 		List<Player> players = getOnlinePlayers();
 		for(Player p : players){
