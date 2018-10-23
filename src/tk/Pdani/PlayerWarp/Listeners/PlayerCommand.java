@@ -235,7 +235,7 @@ public class PlayerCommand extends BukkitCommand {
 			String plugin = MessageManager.getString("plugin");
 			plugin = m.tl(plugin, plugin_name, plugin_version, plugin_author);
 			plugin = ChatColor.translateAlternateColorCodes('&',plugin);
-			sender.sendMessage("§e"+plugin_name+" plugin v"+plugin_version+" created by "+plugin_author);
+			sender.sendMessage(plugin);
 			if(sender instanceof Player){
 				Player p = (Player) sender;
 				int l = (sender.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(p);
