@@ -225,9 +225,16 @@ public class PlayerCommand extends BukkitCommand {
 	public void sendHelp(CommandSender sender, String label, HelpType type){
 		String noPerm = MessageManager.getString("noPerm");
 		if(type == HelpType.ALL){
-			String plugin_author = plugin.getDescription().getAuthors().get(0);
+			List<String> authors = plugin.getDescription().getAuthors();
+			String plugin_author = "";
+			for(String a : authors){
+				plugin_author += plugin_author == "" ? a : ", "+a;
+			}
 			String plugin_name = plugin.getName();
 			String plugin_version = plugin.getDescription().getVersion();
+			String plugin = MessageManager.getString("plugin");
+			plugin = m.tl(plugin, plugin_name, plugin_version, plugin_author);
+			plugin = ChatColor.translateAlternateColorCodes('&',plugin);
 			sender.sendMessage("§e"+plugin_name+" plugin v"+plugin_version+" created by "+plugin_author);
 			if(sender instanceof Player){
 				Player p = (Player) sender;
