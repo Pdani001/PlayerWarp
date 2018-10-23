@@ -12,7 +12,7 @@ Installation is very simple, just follow the next few steps:
 4. Start your server
 
 ## Configuration, commands & permissions
-You can find help and tutorials on our Wiki. :)
+You can find help and tutorials on the [Wiki page](https://github.com/Pdani001/PlayerWarp/wiki). :)
 
 ## Some Q&A's
 **Q**: Is this plugin Open Source?
