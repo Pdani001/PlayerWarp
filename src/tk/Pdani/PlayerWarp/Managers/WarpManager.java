@@ -78,15 +78,16 @@ public class WarpManager {
 			String text = MessageManager.getString("warpNameWithIllegalChars");
 			throw new PlayerWarpException(text);
 		}
-		String uuid = owner.getUniqueId().toString();
-		if(this.warps.containsKey(owner)){
-			ArrayList<String> list = (ArrayList<String>) this.getPlayerWarps(owner);
+		OfflinePlayer op = owner;
+		String uuid = op.getUniqueId().toString();
+		if(this.warps.containsKey(op)){
+			ArrayList<String> list = (ArrayList<String>) this.getPlayerWarps(op);
 			list.add(name);
-			this.warps.put(owner, list);
+			this.warps.put(op, list);
 		} else {
 			ArrayList<String> list = new ArrayList<String>();
 			list.add(name);
-			this.warps.put(owner, list);
+			this.warps.put(op, list);
 		}
 		
 		cc.getConfig(uuid).set("warps."+name+".location", owner.getLocation());
