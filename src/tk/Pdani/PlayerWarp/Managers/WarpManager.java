@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,6 +28,7 @@ public class WarpManager {
 	public WarpManager(JavaPlugin plugin){
 		this.plugin = plugin;
 		this.cc = new CustomConfig(this.plugin);
+		Main.convertOldWarps(this,cc);
 		this.m = new Message(this.plugin);
 		putRestricted();
 		try {
@@ -90,7 +92,13 @@ public class WarpManager {
 			this.warps.put(op, list);
 		}
 		
-		cc.getConfig(uuid).set("warps."+name+".location", owner.getLocation());
+		Location l = owner.getLocation();
+		cc.getConfig(uuid).set("warps."+name+".location.world", l.getWorld().getName());
+		cc.getConfig(uuid).set("warps."+name+".location.x", l.getX());
+		cc.getConfig(uuid).set("warps."+name+".location.y", l.getY());
+		cc.getConfig(uuid).set("warps."+name+".location.z", l.getZ());
+		cc.getConfig(uuid).set("warps."+name+".location.pitch", l.getPitch());
+		cc.getConfig(uuid).set("warps."+name+".location.yaw", l.getYaw());
 		cc.saveConfig(uuid);
 		
 		String msg = MessageManager.getString("warpCreated");
@@ -157,8 +165,18 @@ public class WarpManager {
 		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
 			if(entry.getValue().contains(warp)){
 				String uuid = entry.getKey().getUniqueId().toString();
-				Object l = cc.getConfig(uuid).get("warps."+warp+".location");
-				Location loc = (l != null) ? (Location)l : null;
+				String w = cc.getConfig(uuid).getString("warps."+warp+".location.world");
+				World world = plugin.getServer().getWorld(w);
+				if(world == null){
+					String text = MessageManager.getString("warpWorldInvalid");
+					throw new PlayerWarpException(m.tl(text));
+				}
+				double x = cc.getConfig(uuid).getDouble("warps."+warp+".location.x");
+				double y = cc.getConfig(uuid).getDouble("warps."+warp+".location.y");
+				double z = cc.getConfig(uuid).getDouble("warps."+warp+".location.z");
+				float pitch = cc.getConfig(uuid).getInt("warps."+warp+".location.pitch");
+				float yaw = cc.getConfig(uuid).getInt("warps."+warp+".location.yaw");
+				Location loc = new Location(world,x,y,z,pitch,yaw);
 				return loc;
 			}
 		}

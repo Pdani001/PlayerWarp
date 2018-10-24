@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
@@ -25,6 +26,7 @@ import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
 import tk.Pdani.PlayerWarp.Listeners.PlayerJoin;
 import tk.Pdani.PlayerWarp.Managers.CustomConfig;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
+import tk.Pdani.PlayerWarp.Managers.WarpManager;
 
 public class Main extends JavaPlugin {
 	private CustomConfig cc = null;
@@ -33,6 +35,7 @@ public class Main extends JavaPlugin {
 	private static JavaPlugin instance = null;
 	private static Main main = null;
 	private List<String> aliases = null;
+	private static Thread thread = null;
 	
 	public void onEnable(){
 		instance = this;
@@ -78,6 +81,11 @@ public class Main extends JavaPlugin {
 	public void onDisable(){
 		getLogger().log(Level.INFO, "Plugin disabled.");
 		unRegisterBukkitCommand("playerwarp",aliases);
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private static Object getPrivateField(Object object, String field)throws SecurityException,
@@ -90,7 +98,7 @@ public class Main extends JavaPlugin {
 	    return result;
 	}
 	
-	public void unRegisterBukkitCommand(String cmd, List<String> aliases) {
+	private void unRegisterBukkitCommand(String cmd, List<String> aliases) {
 	    try {
 	        Object result = getPrivateField(Bukkit.getServer().getPluginManager(), "commandMap");
 	        SimpleCommandMap commandMap = (SimpleCommandMap) result;
@@ -104,6 +112,40 @@ public class Main extends JavaPlugin {
 	            }
 	        }
 	    } catch (Exception e) {}
+	}
+	
+	public static void convertOldWarps(WarpManager wm, CustomConfig cc){
+		thread = new Thread("PlayerWarp Converter") {
+			public void run(){
+				List<String> warps = wm.getWarps();
+				for(String w : warps){
+					String owner = "";
+					try {
+						owner = wm.getWarpOwner(w).getUniqueId().toString();
+					} catch (PlayerWarpException e) {
+						e.printStackTrace();	// will never print
+					}
+					if(cc.getConfig(owner).isConfigurationSection("warps."+w+".location")){
+						continue;
+					}
+					
+					Object o = cc.getConfig(owner).get("warps."+w+".location");
+					if(o instanceof Location){
+						if(isDebug()) instance.getLogger().log(Level.INFO, "Converting "+w+" warp...");
+						Location l = (Location) o;
+						cc.getConfig(owner).set("warps."+w+".location", null);
+						cc.getConfig(owner).set("warps."+w+".location.world", l.getWorld().getName());
+						cc.getConfig(owner).set("warps."+w+".location.x", l.getX());
+						cc.getConfig(owner).set("warps."+w+".location.y", l.getY());
+						cc.getConfig(owner).set("warps."+w+".location.z", l.getZ());
+						cc.getConfig(owner).set("warps."+w+".location.pitch", l.getPitch());
+						cc.getConfig(owner).set("warps."+w+".location.yaw", l.getYaw());
+						cc.saveConfig(owner);
+					}
+				}
+			}
+		};
+		thread.start();
 	}
 	
 	public static boolean isDebug(){
