@@ -28,7 +28,6 @@ public class WarpManager {
 	public WarpManager(JavaPlugin plugin){
 		this.plugin = plugin;
 		this.cc = new CustomConfig(this.plugin);
-		Main.convertOldWarps(this,cc);
 		this.m = new Message(this.plugin);
 		putRestricted();
 		try {
@@ -220,6 +219,7 @@ public class WarpManager {
 		} else {
 			throw new PlayerWarpException("Players directory not found!");
 		}
+		Main.convertOldWarps(this,this.cc);
 	}
 	
 	public void reloadWarps() throws NullPointerException,PlayerWarpException {
