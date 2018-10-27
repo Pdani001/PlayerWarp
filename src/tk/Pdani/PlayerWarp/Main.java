@@ -21,6 +21,7 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
 import tk.Pdani.PlayerWarp.Listeners.PlayerJoin;
@@ -115,7 +116,7 @@ public class Main extends JavaPlugin {
 	}
 	
 	public static void convertOldWarps(WarpManager wm, CustomConfig cc){
-		thread = new Thread("PlayerWarp Converter") {
+		asyncTask(new Runnable() {
 			public void run(){
 				List<String> warps = wm.getWarps();
 				for(String w : warps){
@@ -144,9 +145,16 @@ public class Main extends JavaPlugin {
 					}
 				}
 			}
-		};
-		thread.start();
+		});
 	}
+	
+	public static void asyncTask(Runnable run){
+		getScheduler().runTaskAsynchronously(instance, run);
+	}
+	
+	public static BukkitScheduler getScheduler() {
+        return instance.getServer().getScheduler();
+    }
 	
 	public static boolean isDebug(){
 		return debug;

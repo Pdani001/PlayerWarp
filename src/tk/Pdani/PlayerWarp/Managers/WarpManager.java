@@ -173,9 +173,9 @@ public class WarpManager {
 				double x = cc.getConfig(uuid).getDouble("warps."+warp+".location.x");
 				double y = cc.getConfig(uuid).getDouble("warps."+warp+".location.y");
 				double z = cc.getConfig(uuid).getDouble("warps."+warp+".location.z");
-				float pitch = cc.getConfig(uuid).getInt("warps."+warp+".location.pitch");
-				float yaw = cc.getConfig(uuid).getInt("warps."+warp+".location.yaw");
-				Location loc = new Location(world,x,y,z,pitch,yaw);
+				float pitch = (float)cc.getConfig(uuid).getDouble("warps."+warp+".location.pitch");
+				float yaw = (float)cc.getConfig(uuid).getDouble("warps."+warp+".location.yaw");
+				Location loc = new Location(world,x,y,z,yaw,pitch);
 				return loc;
 			}
 		}
