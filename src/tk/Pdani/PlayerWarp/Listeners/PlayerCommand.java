@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
@@ -31,6 +32,7 @@ public class PlayerCommand extends BukkitCommand {
 	private static String CMD_REMOVE = "remove";
 	private static String CMD_RELOAD = "reload";
 	private static String CMD_UPDATEMSG = "updatemsg";
+	private static String CMD_INFO = "info";
 	private static String CMD_WARP = "<warp>";
 	private static String CMD_COLOR = "6";
 	private static boolean WORLDS_AS_BLACKLIST = true;
@@ -47,6 +49,7 @@ public class PlayerCommand extends BukkitCommand {
 		CMD_REMOVE = this.plugin.getConfig().getString("cmdargs.remove",CMD_REMOVE);
 		CMD_RELOAD = this.plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
 		CMD_UPDATEMSG = this.plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
+		CMD_INFO = this.plugin.getConfig().getString("cmdargs.info",CMD_INFO);
 		CMD_WARP = this.plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
 		CMD_COLOR = this.plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 		WORLDS = this.plugin.getConfig().getStringList("worlds");
@@ -96,6 +99,8 @@ public class PlayerCommand extends BukkitCommand {
 						return true;
 					}
 					sendHelp(sender,commandLabel,HelpType.REMOVE);
+				} else if(args[0].equalsIgnoreCase(CMD_INFO)){
+					sendHelp(sender,commandLabel,HelpType.INFO);
 				} else if(args[0].equalsIgnoreCase(CMD_RELOAD)){
 					if(!sender.hasPermission("playerwarp.reload")){
 						sender.sendMessage(ChatColor.RED + noPerm);
@@ -196,6 +201,31 @@ public class PlayerCommand extends BukkitCommand {
 			            page = Integer.parseInt(args[1]);
 			        }
 					warpList(sender,page);
+				} else if(args[0].equalsIgnoreCase(CMD_INFO)){
+					String warp = args[1];
+					OfflinePlayer player = null;
+					Location loc = null;
+					try {
+						player = wm.getWarpOwner(warp);
+					} catch (PlayerWarpException e) {
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						return true;
+					}
+					try {
+						loc = wm.getWarpLocation(warp);
+					} catch (PlayerWarpException e) {
+						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						return true;
+					}
+					String top,owner,world,pos;
+					top = m.tl(MessageManager.getString("info.top"),warp);
+					owner = m.tl(MessageManager.getString("info.owner"),player.getName());
+					world = m.tl(MessageManager.getString("info.world"),loc.getWorld().getName());
+					pos = m.tl(MessageManager.getString("info.pos"),loc.getX(),loc.getY(),loc.getZ());
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',top));
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',owner));
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',world));
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',pos));
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -219,6 +249,7 @@ public class PlayerCommand extends BukkitCommand {
 		CMD_REMOVE = plugin.getConfig().getString("cmdargs.remove",CMD_REMOVE);
 		CMD_RELOAD = plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
 		CMD_UPDATEMSG = plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
+		CMD_INFO = plugin.getConfig().getString("cmdargs.info",CMD_INFO);
 		CMD_WARP = plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
 		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 	}
@@ -253,6 +284,8 @@ public class PlayerCommand extends BukkitCommand {
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.create")));
 			if(sender.hasPermission("playerwarp.remove"))
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.remove")));
+			if(sender.hasPermission("playerwarp.info"))
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.info")));
 			if(sender.hasPermission("playerwarp.reload"))
 				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
 			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
@@ -266,6 +299,12 @@ public class PlayerCommand extends BukkitCommand {
 		} else if(type == HelpType.REMOVE){
 			if(sender.hasPermission("playerwarp.remove")) {
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP);
+			} else {
+				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
+			}
+		} else if(type == HelpType.INFO){
+			if(sender.hasPermission("playerwarp.info")) {
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO+" "+CMD_WARP);
 			} else {
 				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}

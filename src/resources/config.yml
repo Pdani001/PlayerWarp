@@ -15,6 +15,7 @@ restricted:
   - listown
   - reload
   - updatemsg
+  - info
 cmdcolor: 6
 cmdargs:
   create: create
@@ -23,4 +24,5 @@ cmdargs:
   listown: listown
   reload: reload
   updatemsg: updatemsg
+  info: info
   warp: '<warp>'
