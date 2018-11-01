@@ -217,10 +217,12 @@ public class PlayerCommand extends BukkitCommand {
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
 						return true;
 					}
-					String top,owner,world,pos;
+					String top,owner,world,pos,w;
+					w = loc.getWorld().getName();
+					w = plugin.getConfig().getString("worldAlias."+w,w);
 					top = m.tl(MessageManager.getString("info.top"),warp);
 					owner = m.tl(MessageManager.getString("info.owner"),player.getName());
-					world = m.tl(MessageManager.getString("info.world"),loc.getWorld().getName());
+					world = m.tl(MessageManager.getString("info.world"),w);
 					pos = m.tl(MessageManager.getString("info.pos"),loc.getX(),loc.getY(),loc.getZ());
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',top));
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',owner));

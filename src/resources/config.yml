@@ -8,6 +8,10 @@ worldsAsBlacklist: false
 worlds:
   - world_the_end
   - world_nether
+worldAlias:
+  world: World
+  world_the_end: The End
+  world_nether: Nether
 restricted:
   - create
   - remove
