@@ -4,5 +4,6 @@ public enum HelpType {
 	CREATE,
 	REMOVE,
 	INFO,
+	COUNT,
 	ALL
 }

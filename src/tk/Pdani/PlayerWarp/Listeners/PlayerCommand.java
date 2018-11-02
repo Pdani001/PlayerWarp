@@ -11,7 +11,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import tk.Pdani.PlayerWarp.HelpType;
@@ -33,6 +32,12 @@ public class PlayerCommand extends BukkitCommand {
 	private static String CMD_RELOAD = "reload";
 	private static String CMD_UPDATEMSG = "updatemsg";
 	private static String CMD_INFO = "info";
+	private static String CMD_COUNT = "count";
+	private static String CMD_COUNT_ADD = "add";
+	private static String CMD_COUNT_DEL = "del";
+	private static String CMD_COUNT_INFO = "info";
+	private static String CMD_PLAYER = "<player>";
+	private static String CMD_AMOUNT = "<amount>";
 	private static String CMD_WARP = "<warp>";
 	private static String CMD_COLOR = "6";
 	private static boolean WORLDS_AS_BLACKLIST = true;
@@ -50,11 +55,18 @@ public class PlayerCommand extends BukkitCommand {
 		CMD_RELOAD = this.plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
 		CMD_UPDATEMSG = this.plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
 		CMD_INFO = this.plugin.getConfig().getString("cmdargs.info",CMD_INFO);
+		CMD_COUNT = this.plugin.getConfig().getString("cmdargs.count",CMD_COUNT);
+		CMD_COUNT_ADD = this.plugin.getConfig().getString("cmdargs.count-add",CMD_COUNT_ADD);
+		CMD_COUNT_DEL = this.plugin.getConfig().getString("cmdargs.count-del",CMD_COUNT_DEL);
+		CMD_COUNT_INFO = this.plugin.getConfig().getString("cmdargs.count-info",CMD_COUNT_INFO);
 		CMD_WARP = this.plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
+		CMD_PLAYER = this.plugin.getConfig().getString("cmdargs.player",CMD_PLAYER);
+		CMD_AMOUNT = this.plugin.getConfig().getString("cmdargs.amount",CMD_AMOUNT);
 		CMD_COLOR = this.plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 		WORLDS = this.plugin.getConfig().getStringList("worlds");
 		WORLDS_AS_BLACKLIST = this.plugin.getConfig().getBoolean("worldsAsBlacklist",WORLDS_AS_BLACKLIST);
 	}
+	@SuppressWarnings("deprecation")
 	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
 		if(sender instanceof Player){
 			Player player = (Player) sender;
@@ -86,7 +98,7 @@ public class PlayerCommand extends BukkitCommand {
 					}
 					if(list.equals(""))
 						list = MessageManager.getString("none");
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("ownWarps"), list)));
+					sender.sendMessage(c(m.tl(MessageManager.getString("ownWarps"), list)));
 				} else if(args[0].equalsIgnoreCase(CMD_CREATE)){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
@@ -101,6 +113,8 @@ public class PlayerCommand extends BukkitCommand {
 					sendHelp(sender,commandLabel,HelpType.REMOVE);
 				} else if(args[0].equalsIgnoreCase(CMD_INFO)){
 					sendHelp(sender,commandLabel,HelpType.INFO);
+				} else if(args[0].equalsIgnoreCase(CMD_COUNT)){
+					sendHelp(sender,commandLabel,HelpType.COUNT);
 				} else if(args[0].equalsIgnoreCase(CMD_RELOAD)){
 					if(!sender.hasPermission("playerwarp.reload")){
 						sender.sendMessage(ChatColor.RED + noPerm);
@@ -114,7 +128,7 @@ public class PlayerCommand extends BukkitCommand {
 						return false;
 					} catch (PlayerWarpException e) {
 						String msg = m.tl(MessageManager.getString("errorWithMsg"), e.getMessage());
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+						sender.sendMessage(c(msg));
 					}
 					plugin.reloadConfig();
 					reloadMsg();
@@ -137,7 +151,7 @@ public class PlayerCommand extends BukkitCommand {
 					Player player = (Player) sender;
 					String warp = args[0];
 					if(!wm.isWarp(warp)){
-						String text = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warpNotFound"));
+						String text = c(MessageManager.getString("warpNotFound"));
 						text = m.tl(text,warp);
 						sender.sendMessage(text);
 						return true;
@@ -146,10 +160,10 @@ public class PlayerCommand extends BukkitCommand {
 					try {
 						loc = wm.getWarpLocation(warp);
 					} catch (PlayerWarpException e) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						sender.sendMessage(c(e.getMessage()));
 						return true;
 					}
-					String text = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warping"));
+					String text = c(MessageManager.getString("warping"));
 					text = m.tl(text,warp);
 					sender.sendMessage(text);
 					player.teleport(loc);
@@ -168,7 +182,7 @@ public class PlayerCommand extends BukkitCommand {
 					int limit = (sender.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(player);
 					int count = wm.getPlayerWarps(player).size();
 					if(limit != -1 && count >= limit){
-						String msg = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("warpLimitReached"));
+						String msg = c(MessageManager.getString("warpLimitReached"));
 						msg = m.tl(msg, limit);
 						sender.sendMessage(msg);
 						return true;
@@ -177,7 +191,7 @@ public class PlayerCommand extends BukkitCommand {
 					try {
 						wm.addWarp(player, warp);
 					} catch (PlayerWarpException e) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						sender.sendMessage(c(e.getMessage()));
 					}
 				} else if(args[0].equalsIgnoreCase(CMD_REMOVE)){
 					if(!(sender instanceof Player)){
@@ -193,7 +207,7 @@ public class PlayerCommand extends BukkitCommand {
 					try {
 						wm.delWarp(player, warp);
 					} catch (PlayerWarpException e) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						sender.sendMessage(c(e.getMessage()));
 					}
 				} else if(args[0].equalsIgnoreCase(CMD_LIST)){
 					int page = 1;
@@ -208,13 +222,13 @@ public class PlayerCommand extends BukkitCommand {
 					try {
 						player = wm.getWarpOwner(warp);
 					} catch (PlayerWarpException e) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						sender.sendMessage(c(e.getMessage()));
 						return true;
 					}
 					try {
 						loc = wm.getWarpLocation(warp);
 					} catch (PlayerWarpException e) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', e.getMessage()));
+						sender.sendMessage(c(e.getMessage()));
 						return true;
 					}
 					String top,owner,world,pos,w;
@@ -224,10 +238,12 @@ public class PlayerCommand extends BukkitCommand {
 					owner = m.tl(MessageManager.getString("info.owner"),player.getName());
 					world = m.tl(MessageManager.getString("info.world"),w);
 					pos = m.tl(MessageManager.getString("info.pos"),loc.getX(),loc.getY(),loc.getZ());
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',top));
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',owner));
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',world));
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&',pos));
+					sender.sendMessage(c(top));
+					sender.sendMessage(c(owner));
+					sender.sendMessage(c(world));
+					sender.sendMessage(c(pos));
+				} else if(args[0].equalsIgnoreCase(CMD_COUNT)){
+					sendHelp(sender,commandLabel,HelpType.COUNT);
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -238,6 +254,60 @@ public class PlayerCommand extends BukkitCommand {
 			            page = Integer.parseInt(args[1]);
 			        }
 					warpList(sender,page);
+				} else if(args[0].equalsIgnoreCase(CMD_COUNT)){
+					String m = args[1];
+					if((args.length < 4 && !m.equalsIgnoreCase(CMD_COUNT_INFO)) || (args.length < 3 && m.equalsIgnoreCase(CMD_COUNT_INFO))) {
+						sendHelp(sender,commandLabel,HelpType.COUNT);
+						return true;
+					}
+					String t = args[2];
+					String a = "";
+					if(args.length == 4){
+						a = args[3];
+					}
+					OfflinePlayer target = plugin.getServer().getOfflinePlayer(t);
+					if(!target.hasPlayedBefore()){
+						sender.sendMessage(c(MessageManager.getString("playerNotFound")));
+						return true;
+					}
+					int amount = 0;
+					if(!m.equalsIgnoreCase(CMD_COUNT_INFO)){
+						try {
+					        amount = Integer.parseInt(a); 
+					    } catch(NumberFormatException e) {
+					    	sender.sendMessage(c(MessageManager.getString("amountNotNumber")));
+					        return true;
+					    } catch(NullPointerException e) {
+					    	sender.sendMessage(c(MessageManager.getString("amountNotNumber")));
+					        return true;
+					    }
+					}
+					if(m.equalsIgnoreCase(CMD_COUNT_ADD)){
+						try {
+							wm.addCount(target, amount);
+						} catch (PlayerWarpException e) {
+							sender.sendMessage(c(e.getMessage()));
+						}
+					} else if(m.equalsIgnoreCase(CMD_COUNT_DEL)){
+						try {
+							wm.delCount(target, amount);
+						} catch (PlayerWarpException e) {
+							sender.sendMessage(c(e.getMessage()));
+						}
+					} else if(m.equalsIgnoreCase(CMD_COUNT_INFO)){
+						if(target.isOnline()){
+							Player onp = plugin.getServer().getPlayer(target.getUniqueId());
+							amount = (onp.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(target);
+						} else {
+							sender.sendMessage(c(MessageManager.getString("playerNotOnline")));
+							return true;
+							//amount = getLimit(target);
+						}
+						String limit = (amount == -1) ? MessageManager.getString("unlimited") : Integer.toString(amount);
+						sender.sendMessage(c(this.m.tl(MessageManager.getString("count.info"),target.getName(),limit)));
+					} else {
+						sender.sendMessage(c(MessageManager.getString("count.invalidMethod")));
+					}
 				} else {
 					sendHelp(sender,commandLabel,HelpType.ALL);
 				}
@@ -252,7 +322,13 @@ public class PlayerCommand extends BukkitCommand {
 		CMD_RELOAD = plugin.getConfig().getString("cmdargs.reload",CMD_RELOAD);
 		CMD_UPDATEMSG = plugin.getConfig().getString("cmdargs.updatemsg",CMD_UPDATEMSG);
 		CMD_INFO = plugin.getConfig().getString("cmdargs.info",CMD_INFO);
-		CMD_WARP = plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
+		CMD_COUNT = this.plugin.getConfig().getString("cmdargs.count",CMD_COUNT);
+		CMD_COUNT_ADD = this.plugin.getConfig().getString("cmdargs.count-add",CMD_COUNT_ADD);
+		CMD_COUNT_DEL = this.plugin.getConfig().getString("cmdargs.count-del",CMD_COUNT_DEL);
+		CMD_COUNT_INFO = this.plugin.getConfig().getString("cmdargs.count-info",CMD_COUNT_INFO);
+		CMD_WARP = this.plugin.getConfig().getString("cmdargs.warp",CMD_WARP);
+		CMD_PLAYER = this.plugin.getConfig().getString("cmdargs.player",CMD_PLAYER);
+		CMD_AMOUNT = this.plugin.getConfig().getString("cmdargs.amount",CMD_AMOUNT);
 		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
 	}
 	public void sendHelp(CommandSender sender, String label, HelpType type){
@@ -290,6 +366,8 @@ public class PlayerCommand extends BukkitCommand {
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.info")));
 			if(sender.hasPermission("playerwarp.reload"))
 				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
+			if(sender.hasPermission("playerwarp.grant"))
+				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_COUNT + " <"+CMD_COUNT_ADD+"/"+CMD_COUNT_DEL+"/"+CMD_COUNT_INFO+"> "+CMD_PLAYER+" "+CMD_AMOUNT+c("&7 - &6"+MessageManager.getString("help.count")));
 			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
 				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
 		} else if(type == HelpType.CREATE){
@@ -307,6 +385,12 @@ public class PlayerCommand extends BukkitCommand {
 		} else if(type == HelpType.INFO){
 			if(sender.hasPermission("playerwarp.info")) {
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO+" "+CMD_WARP);
+			} else {
+				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
+			}
+		} else if(type == HelpType.COUNT){
+			if(sender.hasPermission("playerwarp.grant")) {
+				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_COUNT + " <"+CMD_COUNT_ADD+"/"+CMD_COUNT_DEL+"/"+CMD_COUNT_INFO+"> "+CMD_PLAYER+" "+CMD_AMOUNT);
 			} else {
 				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}
@@ -334,20 +418,19 @@ public class PlayerCommand extends BukkitCommand {
 		return ChatColor.translateAlternateColorCodes('&', msg);
 	}
 	
-	public int getLimit(Player player, int defaultValue) {
-		String permissionPrefix = "playerwarp.limit.";
+	public int getLimit(OfflinePlayer player, int defaultValue) {
+		Object i = wm.getCount(player);
+		if(i != null)
+			return (int)i;
 
-		for (PermissionAttachmentInfo attachmentInfo : player.getEffectivePermissions()) {
-			String perm = attachmentInfo.getPermission();
-			if (perm.startsWith(permissionPrefix) && !perm.endsWith("unlimited")) {
-				return Integer.parseInt(perm.substring(perm.lastIndexOf(".") + 1));
-			}
-		}
-
-		return defaultValue;
+		if(!player.isOnline())
+			return defaultValue;
+		
+		Player onp = plugin.getServer().getPlayer(player.getUniqueId());
+		return wm.getPermCount(onp,defaultValue);
 	}
 	
-	public int getLimit(Player player) {
+	public int getLimit(OfflinePlayer player) {
 		return getLimit(player,0);
 	}
 	
@@ -369,5 +452,9 @@ public class PlayerCommand extends BukkitCommand {
         if(warps.equals(""))
         	warps = MessageManager.getString("none");
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), page, maxPages, warps)));
+	}
+	
+	public WarpManager getWM(){
+		return wm;
 	}
 }

@@ -20,6 +20,7 @@ restricted:
   - reload
   - updatemsg
   - info
+  - count
 cmdcolor: 6
 cmdargs:
   create: create
@@ -29,4 +30,10 @@ cmdargs:
   reload: reload
   updatemsg: updatemsg
   info: info
+  count: count
+  count-add: add
+  count-del: del
+  count-info: info
+  player: '<player>'
+  amount: '[amount]'
   warp: '<warp>'

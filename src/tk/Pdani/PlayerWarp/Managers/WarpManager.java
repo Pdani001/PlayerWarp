@@ -13,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import tk.Pdani.PlayerWarp.Main;
@@ -21,6 +22,7 @@ import tk.Pdani.PlayerWarp.PlayerWarpException;
 
 public class WarpManager {
 	private HashMap<OfflinePlayer,List<String>> warps = new HashMap<OfflinePlayer,List<String>>();
+	private HashMap<OfflinePlayer,Integer> count = new HashMap<OfflinePlayer,Integer>();
 	private ArrayList<String> restricted = new ArrayList<String>();
 	private JavaPlugin plugin = null;
 	private CustomConfig cc = null;
@@ -207,12 +209,28 @@ public class WarpManager {
 					for(String k : cc.getConfig(uuid).getConfigurationSection("warps").getKeys(false)){
 						wl.add(k);
 					}
+					int amount = cc.getConfig(uuid).getInt("count",0);
 					Player player = plugin.getServer().getPlayer(UUID.fromString(uuid));
 					if(player == null){
 						OfflinePlayer offp = plugin.getServer().getOfflinePlayer(UUID.fromString(uuid));
 						this.warps.put(offp, wl);
+						if(cc.getConfig(uuid).isSet("count"))
+							this.count.put(offp, amount);
 					} else {
 						this.warps.put(player, wl);
+						if(cc.getConfig(uuid).isSet("count"))
+							this.count.put(player, amount);
+					}
+				} else {
+					if(cc.getConfig(uuid).isSet("count")){
+						int amount = cc.getConfig(uuid).getInt("count");
+						Player player = plugin.getServer().getPlayer(UUID.fromString(uuid));
+						if(player == null){
+							OfflinePlayer offp = plugin.getServer().getOfflinePlayer(UUID.fromString(uuid));
+							this.count.put(offp, amount);
+						} else {
+							this.count.put(player, amount);
+						}
 					}
 				}
 			}
@@ -225,5 +243,74 @@ public class WarpManager {
 	public void reloadWarps() throws NullPointerException,PlayerWarpException {
 		this.warps.clear();
 		loadWarps();
+	}
+	
+	public void addCount(OfflinePlayer p, int am) throws PlayerWarpException{
+		int pc = 0;
+		if(p.isOnline()){
+			Player onp = plugin.getServer().getPlayer(p.getUniqueId());
+			pc = getPermCount(onp);
+		}
+		String uuid = p.getUniqueId().toString();
+		String text = MessageManager.getString("count.added");
+		if(count.get(p) != null){
+			Integer i = count.get(p);
+			count.replace(p, i+am);
+			cc.getConfig(uuid).set("count", i+am);
+			cc.saveConfig(uuid);
+			throw new PlayerWarpException(m.tl(text,am,p.getName()));
+		}
+		if(pc > 0)
+			am += pc;
+		cc.getConfig(uuid).set("count", am);
+		cc.saveConfig(uuid);
+		count.put(p, am);
+		throw new PlayerWarpException(m.tl(text,am-pc,p.getName()));
+	}
+	
+	public void delCount(OfflinePlayer p, int am) throws PlayerWarpException{
+		int pc = 0;
+		if(p.isOnline()){
+			Player onp = plugin.getServer().getPlayer(p.getUniqueId());
+			pc = getPermCount(onp);
+		}
+		String uuid = p.getUniqueId().toString();
+		Integer i = count.get(p);
+		if(i != null){
+			i -= pc;
+			if(i <= am) {
+				cc.getConfig(uuid).set("count", null);
+				count.remove(p);
+			} else {
+				cc.getConfig(uuid).set("count", i-am);
+				count.replace(p, i-am);
+			}
+			cc.saveConfig(uuid);
+			String text = MessageManager.getString("count.removed");
+			throw new PlayerWarpException(m.tl(text,am,p.getName()));
+		}
+		String text = MessageManager.getString("count.notEnough");
+		throw new PlayerWarpException(m.tl(text,p.getName()));
+	}
+	
+	public Object getCount(OfflinePlayer p){
+		return count.get(p);
+	}
+	
+	public int getPermCount(Player player, int defaultValue) {
+		String permissionPrefix = "playerwarp.limit.";
+
+		for (PermissionAttachmentInfo attachmentInfo : player.getEffectivePermissions()) {
+			String perm = attachmentInfo.getPermission();
+			if (perm.startsWith(permissionPrefix) && !perm.endsWith("unlimited")) {
+				return Integer.parseInt(perm.substring(perm.lastIndexOf(".") + 1));
+			}
+		}
+
+		return defaultValue;
+	}
+	
+	public int getPermCount(Player player){
+		return getPermCount(player,0);
 	}
 }

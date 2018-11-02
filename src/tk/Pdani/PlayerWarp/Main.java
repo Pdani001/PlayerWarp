@@ -36,7 +36,6 @@ public class Main extends JavaPlugin {
 	private static JavaPlugin instance = null;
 	private static Main main = null;
 	private List<String> aliases = null;
-	private static Thread thread = null;
 	
 	public void onEnable(){
 		instance = this;
@@ -52,7 +51,8 @@ public class Main extends JavaPlugin {
 		}
 		
 		
-		Command cmdexec = new PlayerCommand("playerwarp",this,aliases);
+		PlayerCommand pc = new PlayerCommand("playerwarp",this,aliases);
+		Command cmdexec = pc;
 		
 		Field bukkitCommandMap;
 		try {
@@ -65,7 +65,7 @@ public class Main extends JavaPlugin {
 		reloadMessages();
 		
 		this.cc = new CustomConfig(this);
-		PlayerJoin pj = new PlayerJoin(this,cc);
+		PlayerJoin pj = new PlayerJoin(this,cc,pc.getWM());
 		getServer().getPluginManager().registerEvents(pj, this);
 		//this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
@@ -82,11 +82,6 @@ public class Main extends JavaPlugin {
 	public void onDisable(){
 		getLogger().log(Level.INFO, "Plugin disabled.");
 		unRegisterBukkitCommand("playerwarp",aliases);
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private static Object getPrivateField(Object object, String field)throws SecurityException,
