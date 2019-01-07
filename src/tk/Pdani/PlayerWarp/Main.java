@@ -22,7 +22,9 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scheduler.BukkitTask;
 
+import tk.Pdani.PlayerWarp.Listeners.MoveEvent;
 import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
 import tk.Pdani.PlayerWarp.Listeners.PlayerJoin;
 import tk.Pdani.PlayerWarp.Managers.CustomConfig;
@@ -36,6 +38,7 @@ public class Main extends JavaPlugin {
 	private static JavaPlugin instance = null;
 	private static Main main = null;
 	private List<String> aliases = null;
+	PlayerCommand pc = null;
 	
 	public void onEnable(){
 		instance = this;
@@ -51,7 +54,7 @@ public class Main extends JavaPlugin {
 		}
 		
 		
-		PlayerCommand pc = new PlayerCommand("playerwarp",this,aliases);
+		pc = new PlayerCommand("playerwarp",this,aliases);
 		Command cmdexec = pc;
 		
 		Field bukkitCommandMap;
@@ -66,7 +69,9 @@ public class Main extends JavaPlugin {
 		
 		this.cc = new CustomConfig(this);
 		PlayerJoin pj = new PlayerJoin(this,cc,pc.getWM());
+		MoveEvent me = new MoveEvent(pc,this);
 		getServer().getPluginManager().registerEvents(pj, this);
+		getServer().getPluginManager().registerEvents(me, this);
 		//this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
 		List<Player> players = getOnlinePlayers();
@@ -147,6 +152,10 @@ public class Main extends JavaPlugin {
 		getScheduler().runTaskAsynchronously(instance, run);
 	}
 	
+	public static BukkitTask asyncTaskLater(Runnable run, long delay){
+		return getScheduler().runTaskLaterAsynchronously(instance, run, delay);
+	}
+	
 	public static BukkitScheduler getScheduler() {
         return instance.getServer().getScheduler();
     }
@@ -185,12 +194,14 @@ public class Main extends JavaPlugin {
 	}
 	
 	public static void updateMsg(File f, InputStream is){
+		Properties props = new Properties();
 		try {
 			InputStream is2 = new FileInputStream(f);
 			if(is2 != is){
+				String v = MessageManager.getString("version");
 				if(isDebug())instance.getLogger().log(Level.INFO, "Saved updated messages.properties");
 				File oldF = new File(instance.getDataFolder()+"/messages.properties");
-				File newF = new File(instance.getDataFolder()+"/messages.old.properties");
+				File newF = new File(instance.getDataFolder()+"/messages.oldv"+v+".properties");
 				if(newF.exists())
 					newF.delete();
 				if(oldF.renameTo(newF)) {
@@ -203,6 +214,14 @@ public class Main extends JavaPlugin {
 		} catch (Exception e) {
 			e.printStackTrace(); // Will probably never print
 		}
+		InputStream fis = null;
+		try {
+			fis = new FileInputStream(f);
+			props.load(fis);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		MessageManager.setProps(props);
 	}
 	public static void reloadMessages(){
 		InputStream is = instance.getResource("messages.properties");

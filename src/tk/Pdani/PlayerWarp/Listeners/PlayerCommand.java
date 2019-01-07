@@ -3,6 +3,7 @@ package tk.Pdani.PlayerWarp.Listeners;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -12,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import tk.Pdani.PlayerWarp.HelpType;
 import tk.Pdani.PlayerWarp.Main;
@@ -24,6 +26,7 @@ public class PlayerCommand extends BukkitCommand {
 	private JavaPlugin plugin = null;
 	private WarpManager wm = null;
 	private Message m = null;
+	private HashMap<Player, BukkitTask> delayed = new HashMap<Player, BukkitTask>();
 	private static final int WARPS_PER_PAGE = 10;
 	private static String CMD_LIST = "list";
 	private static String CMD_LISTOWN = "listown";
@@ -156,17 +159,42 @@ public class PlayerCommand extends BukkitCommand {
 						sender.sendMessage(text);
 						return true;
 					}
-					Location loc = null;
-					try {
-						loc = wm.getWarpLocation(warp);
-					} catch (PlayerWarpException e) {
-						sender.sendMessage(c(e.getMessage()));
-						return true;
+					int delay = plugin.getConfig().getInt("warpDelay",0);
+					final String textd = m.tl(c(MessageManager.getString("warpingDelayed")),warp,delay);
+					if(delay > 0){
+						cancelWarping(player);
+						sender.sendMessage(textd);
+						BukkitTask task = Main.asyncTaskLater(new Runnable() {
+				            @Override
+				            public void run() {
+				            	String text = c(MessageManager.getString("warping"));
+								text = m.tl(text,warp);
+				            	sender.sendMessage(text);
+				            	Location loc = null;
+								try {
+									loc = wm.getWarpLocation(warp);
+								} catch (PlayerWarpException e) {
+									sender.sendMessage(c(e.getMessage()));
+									return;
+								}
+								player.teleport(loc);
+								delayed.remove(player);
+				            }
+						},(long)delay*20L);
+						delayed.put(player, task);
+					} else {
+						Location loc = null;
+						try {
+							loc = wm.getWarpLocation(warp);
+						} catch (PlayerWarpException e) {
+							sender.sendMessage(c(e.getMessage()));
+							return true;
+						}
+						String text = c(MessageManager.getString("warping"));
+						text = m.tl(text,warp);
+						sender.sendMessage(text);
+						player.teleport(loc);
 					}
-					String text = c(MessageManager.getString("warping"));
-					text = m.tl(text,warp);
-					sender.sendMessage(text);
-					player.teleport(loc);
 				}
 			} else if(args.length == 2) {
 				if(args[0].equalsIgnoreCase(CMD_CREATE)){
@@ -330,6 +358,8 @@ public class PlayerCommand extends BukkitCommand {
 		CMD_PLAYER = this.plugin.getConfig().getString("cmdargs.player",CMD_PLAYER);
 		CMD_AMOUNT = this.plugin.getConfig().getString("cmdargs.amount",CMD_AMOUNT);
 		CMD_COLOR = plugin.getConfig().getString("cmdcolor",CMD_COLOR).substring(0, 1);
+		WORLDS = this.plugin.getConfig().getStringList("worlds");
+		WORLDS_AS_BLACKLIST = this.plugin.getConfig().getBoolean("worldsAsBlacklist",WORLDS_AS_BLACKLIST);
 	}
 	public void sendHelp(CommandSender sender, String label, HelpType type){
 		String noPerm = MessageManager.getString("noPerm");
@@ -456,5 +486,16 @@ public class PlayerCommand extends BukkitCommand {
 	
 	public WarpManager getWM(){
 		return wm;
+	}
+	
+	public boolean isWarping(Player player){
+		return (delayed.get(player) != null);
+	}
+	
+	public void cancelWarping(Player player){
+		if(delayed.get(player) != null){
+			delayed.get(player).cancel();
+			delayed.remove(player);
+		}
 	}
 }

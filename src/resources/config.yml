@@ -12,6 +12,7 @@ worldAlias:
   world: World
   world_the_end: The End
   world_nether: Nether
+warpDelay: 0
 restricted:
   - create
   - remove
