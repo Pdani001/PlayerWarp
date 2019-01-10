@@ -60,17 +60,24 @@ public class WarpManager {
 	public boolean isWarp(String warp){
 		for(List<String> wl : this.warps.values()){
 			for(String w : wl){
-				if(w.equals(warp)){
-					return true;
+				if(plugin.getConfig().getBoolean("warpNameIgnoreCase", false)){
+					if(w.equalsIgnoreCase(warp))
+						return true;
 				}
+				if(w.equals(warp))
+					return true;
 			}
 		}
 		return false;
 	}
 	public void addWarp(Player owner, String name) throws PlayerWarpException{
 		if(isWarp(name)){
-			String text = MessageManager.getString("warpAlreadyExists");
-			throw new PlayerWarpException(m.tl(text,name));
+			if(!owner.hasPermission("playerwarp.create.override")){
+				String text = MessageManager.getString("warpAlreadyExists");
+				throw new PlayerWarpException(m.tl(text,name));
+			} else {
+				delWarp(null,name);
+			}
 		}
 		if(this.restricted.contains(name.toLowerCase())){
 			String text = MessageManager.getString("warpNameRestricted");
@@ -111,38 +118,53 @@ public class WarpManager {
 			String text = MessageManager.getString("warpNotFound");
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
-		if(this.restricted.contains(warp.toLowerCase())){
-			String text = MessageManager.getString("warpNameRestricted");
-			throw new PlayerWarpException(m.tl(text,warp));
-		}
-		String uuid = user.getUniqueId().toString();
-		OfflinePlayer owner = this.getWarpOwner(warp);
-		String warpowner = owner.getUniqueId().toString();
-		boolean isOwner = (warpowner != null && warpowner.equals(uuid));
-		if(!isOwner && !user.hasPermission("playerwarp.remove.others")){
-			String text = MessageManager.getString("notOwnerOfWarp");
-			throw new PlayerWarpException(m.tl(text,warp));
-		}
-		ArrayList<String> olist = new ArrayList<String>();
-		olist.addAll(warps.get(owner));
-		boolean success = olist.remove(warp);
-		if(!success){
-			String msg = MessageManager.getString("warpRemoveError");
-			msg = m.tl(msg,warp);
-			user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
-		} else {
-			warps.put(owner, olist);
-			cc.getConfig(warpowner).set("warps."+warp, null);
-			cc.saveConfig(warpowner);
-			String msg = "";
-			if(isOwner){
-				msg = MessageManager.getString("warpRemoved");
-				msg = m.tl(msg,warp);
-			} else {
-				msg = MessageManager.getString("warpRemovedOther");
-				msg = m.tl(msg,owner.getName(),warp);
+		if(user != null){
+			String uuid = user.getUniqueId().toString();
+			OfflinePlayer owner = this.getWarpOwner(warp);
+			String warpowner = owner.getUniqueId().toString();
+			boolean isOwner = (warpowner != null && warpowner.equals(uuid));
+			if(!isOwner && !user.hasPermission("playerwarp.remove.others")){
+				String text = MessageManager.getString("notOwnerOfWarp");
+				throw new PlayerWarpException(m.tl(text,warp));
 			}
-			user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+			ArrayList<String> olist = new ArrayList<String>();
+			olist.addAll(warps.get(owner));
+			String name = getRealWarpName(warp);
+			boolean success = olist.remove(name);
+			if(!success){
+				String msg = MessageManager.getString("warpRemoveError");
+				msg = m.tl(msg,warp);
+				user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+			} else {
+				warps.put(owner, olist);
+				cc.getConfig(warpowner).set("warps."+name, null);
+				cc.saveConfig(warpowner);
+				String msg = "";
+				if(isOwner){
+					msg = MessageManager.getString("warpRemoved");
+					msg = m.tl(msg,warp);
+				} else {
+					msg = MessageManager.getString("warpRemovedOther");
+					msg = m.tl(msg,owner.getName(),warp);
+				}
+				user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+			}
+		} else {
+			OfflinePlayer owner = this.getWarpOwner(warp);
+			String warpowner = owner.getUniqueId().toString();
+			ArrayList<String> olist = new ArrayList<String>();
+			olist.addAll(warps.get(owner));
+			String name = getRealWarpName(warp);
+			boolean success = olist.remove(name);
+			if(!success){
+				String msg = MessageManager.getString("warpRemoveError");
+				msg = m.tl(msg,warp);
+				throw new PlayerWarpException(ChatColor.translateAlternateColorCodes('&', msg));
+			} else {
+				warps.put(owner, olist);
+				cc.getConfig(warpowner).set("warps."+name, null);
+				cc.saveConfig(warpowner);
+			}
 		}
 	}
 	public OfflinePlayer getWarpOwner(String warp) throws PlayerWarpException{
@@ -151,7 +173,7 @@ public class WarpManager {
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
 		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
-			if(entry.getValue().contains(warp)){
+			if(contains(entry.getValue(),warp)){
 				OfflinePlayer warpowner = entry.getKey();
 				return warpowner;
 			}
@@ -164,24 +186,47 @@ public class WarpManager {
 			throw new PlayerWarpException(m.tl(text,warp));
 		}
 		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
-			if(entry.getValue().contains(warp)){
+			if(contains(entry.getValue(),warp)){
 				String uuid = entry.getKey().getUniqueId().toString();
-				String w = cc.getConfig(uuid).getString("warps."+warp+".location.world");
+				String name = getRealWarpName(warp);
+				String w = cc.getConfig(uuid).getString("warps."+name+".location.world");
 				World world = plugin.getServer().getWorld(w);
 				if(world == null){
 					String text = MessageManager.getString("warpWorldInvalid");
 					throw new PlayerWarpException(m.tl(text));
 				}
-				double x = cc.getConfig(uuid).getDouble("warps."+warp+".location.x");
-				double y = cc.getConfig(uuid).getDouble("warps."+warp+".location.y");
-				double z = cc.getConfig(uuid).getDouble("warps."+warp+".location.z");
-				float pitch = (float)cc.getConfig(uuid).getDouble("warps."+warp+".location.pitch");
-				float yaw = (float)cc.getConfig(uuid).getDouble("warps."+warp+".location.yaw");
+				double x = cc.getConfig(uuid).getDouble("warps."+name+".location.x");
+				double y = cc.getConfig(uuid).getDouble("warps."+name+".location.y");
+				double z = cc.getConfig(uuid).getDouble("warps."+name+".location.z");
+				float pitch = (float)cc.getConfig(uuid).getDouble("warps."+name+".location.pitch");
+				float yaw = (float)cc.getConfig(uuid).getDouble("warps."+name+".location.yaw");
 				Location loc = new Location(world,x,y,z,yaw,pitch);
 				return loc;
 			}
 		}
 		return null;
+	}
+	private String getRealWarpName(String name){
+		if(!isWarp(name)){
+			return null;
+		}
+		if(!plugin.getConfig().getBoolean("warpNameIgnoreCase", false)){
+			return name;
+		}
+		for(String w : getWarps()){
+			if(w.equalsIgnoreCase(name)) return w;
+		}
+		return null;
+	}
+	private boolean contains(List<String> list, String word){
+		for(String s : list){
+			if(plugin.getConfig().getBoolean("warpNameIgnoreCase", false)) {
+				if(s.equalsIgnoreCase(word)) return true;
+			} else {
+				if(s.equals(word)) return true;
+			}
+		}
+		return false;
 	}
 	private void putRestricted(){
 		List<String> list = plugin.getConfig().getStringList("restricted");
@@ -192,6 +237,7 @@ public class WarpManager {
 		if(!this.warps.isEmpty()){
 			throw new PlayerWarpException("Warps already loaded!");
 		}
+		ArrayList<String> all = new ArrayList<String>();
 		File dir = new File(plugin.getDataFolder(),"/players");
 		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
@@ -207,7 +253,19 @@ public class WarpManager {
 				cc.reloadConfig(uuid);
 				if(cc.getConfig(uuid).isConfigurationSection("warps")){
 					for(String k : cc.getConfig(uuid).getConfigurationSection("warps").getKeys(false)){
+						if(plugin.getConfig().getBoolean("warpNameIgnoreCase", false)){
+							boolean f = false;
+							for(String a : all){
+								f = (a.equalsIgnoreCase(k));
+								if(f) break;
+							}
+							if(f){
+								if(Main.isDebug()) plugin.getLogger().log(Level.WARNING, "Ignoring warp '"+k+"' (Duplicate entry)");
+								continue;
+							}
+						}
 						wl.add(k);
+						all.add(k);
 					}
 					int amount = cc.getConfig(uuid).getInt("count",0);
 					Player player = plugin.getServer().getPlayer(UUID.fromString(uuid));

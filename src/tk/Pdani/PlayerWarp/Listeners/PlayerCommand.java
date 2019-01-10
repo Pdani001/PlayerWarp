@@ -124,6 +124,8 @@ public class PlayerCommand extends BukkitCommand {
 						return true;
 					}
 					Main.reloadMessages();
+					plugin.reloadConfig();
+					reloadMsg();
 					try {
 						wm.reloadWarps();
 					} catch (NullPointerException e) {
@@ -133,8 +135,6 @@ public class PlayerCommand extends BukkitCommand {
 						String msg = m.tl(MessageManager.getString("errorWithMsg"), e.getMessage());
 						sender.sendMessage(c(msg));
 					}
-					plugin.reloadConfig();
-					reloadMsg();
 					String msg = m.tl(MessageManager.getString("reload"), "v"+plugin.getDescription().getVersion());
 					sender.sendMessage(ChatColor.RED + msg);
 				} else if(Main.msgUpdate && args[0].equalsIgnoreCase(CMD_UPDATEMSG)){

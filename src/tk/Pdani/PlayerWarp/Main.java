@@ -38,7 +38,7 @@ public class Main extends JavaPlugin {
 	private static JavaPlugin instance = null;
 	private static Main main = null;
 	private List<String> aliases = null;
-	PlayerCommand pc = null;
+	private PlayerCommand pc = null;
 	
 	public void onEnable(){
 		instance = this;
