@@ -71,14 +71,6 @@ public class PlayerCommand extends BukkitCommand {
 	}
 	@SuppressWarnings("deprecation")
 	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
-		if(sender instanceof Player){
-			Player player = (Player) sender;
-			if(disallowWorld(player)){
-				String noPerm = MessageManager.getString("worldDisallowed");
-				sender.sendMessage(ChatColor.RED + noPerm);
-				return true;
-			}
-		}
 			String noPerm = MessageManager.getString("noPerm");
 			if(!sender.hasPermission("playerwarp.use")){
 				sender.sendMessage(ChatColor.RED + noPerm);
@@ -107,10 +99,22 @@ public class PlayerCommand extends BukkitCommand {
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
 						return true;
 					}
+					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
+						return true;
+					}
 					sendHelp(sender,commandLabel,HelpType.CREATE);
 				} else if(args[0].equalsIgnoreCase(CMD_REMOVE)){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
+						return true;
+					}
+					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
 						return true;
 					}
 					sendHelp(sender,commandLabel,HelpType.REMOVE);
@@ -207,6 +211,11 @@ public class PlayerCommand extends BukkitCommand {
 						return true;
 					}
 					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
+						return true;
+					}
 					int limit = (sender.hasPermission("playerwarp.limit.unlimited")) ? -1 : getLimit(player);
 					int count = wm.getPlayerWarps(player).size();
 					if(limit != -1 && count >= limit){
@@ -231,6 +240,11 @@ public class PlayerCommand extends BukkitCommand {
 						return true;
 					}
 					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
+						return true;
+					}
 					String warp = args[1];
 					try {
 						wm.delWarp(player, warp);
@@ -383,31 +397,55 @@ public class PlayerCommand extends BukkitCommand {
 				int count = wm.getPlayerWarps(p).size();
 				msg = m.tl(msg, count, limit);
 				sender.sendMessage(msg);
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.warp")));
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
+				if(sender.hasPermission("playerwarp.create") || sender.hasPermission("playerwarp.remove"))
+					sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LISTOWN+c("&7 - &6"+MessageManager.getString("help.listown")));
+				if(sender.hasPermission("playerwarp.create") && !disallowWorld(p))
+					sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.create")));
+				if(sender.hasPermission("playerwarp.remove") && !disallowWorld(p))
+					sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.remove")));
+				if(sender.hasPermission("playerwarp.info"))
+					sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.info")));
+				if(sender.hasPermission("playerwarp.reload"))
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
+				if(sender.hasPermission("playerwarp.grant"))
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_COUNT + " <"+CMD_COUNT_ADD+"/"+CMD_COUNT_DEL+"/"+CMD_COUNT_INFO+"> "+CMD_PLAYER+" "+CMD_AMOUNT+c("&7 - &6"+MessageManager.getString("help.count")));
+				if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
+			} else {
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.warp")));
+				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
+					sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.info")));
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_COUNT + " <"+CMD_COUNT_ADD+"/"+CMD_COUNT_DEL+"/"+CMD_COUNT_INFO+"> "+CMD_PLAYER+" "+CMD_AMOUNT+c("&7 - &6"+MessageManager.getString("help.count")));
+				if(Main.msgUpdate)
+					sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
 			}
-			sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.warp")));
-			sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
-			if(sender.hasPermission("playerwarp.create") || sender.hasPermission("playerwarp.remove"))
-				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LISTOWN+c("&7 - &6"+MessageManager.getString("help.listown")));
-			if(sender.hasPermission("playerwarp.create"))
-				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.create")));
-			if(sender.hasPermission("playerwarp.remove"))
-				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.remove")));
-			if(sender.hasPermission("playerwarp.info"))
-				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_INFO + " " + CMD_WARP+c("&7 - &6"+MessageManager.getString("help.info")));
-			if(sender.hasPermission("playerwarp.reload"))
-				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_RELOAD+c("&7 - &6"+MessageManager.getString("help.reload")));
-			if(sender.hasPermission("playerwarp.grant"))
-				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_COUNT + " <"+CMD_COUNT_ADD+"/"+CMD_COUNT_DEL+"/"+CMD_COUNT_INFO+"> "+CMD_PLAYER+" "+CMD_AMOUNT+c("&7 - &6"+MessageManager.getString("help.count")));
-			if(Main.msgUpdate && sender.hasPermission("playerwarp.reload"))
-				sender.sendMessage(ChatColor.getByChar("d") + l(label)+CMD_UPDATEMSG+c("&7 - &6"+MessageManager.getString("help.updatemsg")));
 		} else if(type == HelpType.CREATE){
 			if(sender.hasPermission("playerwarp.create")) {
+				if(sender instanceof Player){
+					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
+						return;
+					}
+				}
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_CREATE+" "+CMD_WARP);
 			} else {
 				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
 			}
 		} else if(type == HelpType.REMOVE){
 			if(sender.hasPermission("playerwarp.remove")) {
+				if(sender instanceof Player){
+					Player player = (Player) sender;
+					if(disallowWorld(player)){
+						String disallowed = MessageManager.getString("worldDisallowed");
+						sender.sendMessage(ChatColor.RED + disallowed);
+						return;
+					}
+				}
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_REMOVE+" "+CMD_WARP);
 			} else {
 				sender.sendMessage(ChatColor.getByChar("c") + noPerm);
