@@ -156,6 +156,10 @@ public class Main extends JavaPlugin {
 		return getScheduler().runTaskLaterAsynchronously(instance, run, delay);
 	}
 	
+	public static BukkitTask taskLater(Runnable run, long delay){
+		return getScheduler().runTaskLater(instance, run, delay);
+	}
+	
 	public static BukkitScheduler getScheduler() {
         return instance.getServer().getScheduler();
     }

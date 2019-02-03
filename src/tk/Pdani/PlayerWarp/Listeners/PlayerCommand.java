@@ -164,7 +164,7 @@ public class PlayerCommand extends BukkitCommand {
 					if(delay > 0){
 						cancelWarping(player);
 						sender.sendMessage(textd);
-						BukkitTask task = Main.asyncTaskLater(new Runnable() {
+						BukkitTask task = Main.taskLater(new Runnable() {
 				            @Override
 				            public void run() {
 				            	String text = c(MessageManager.getString("warping"));
