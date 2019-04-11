@@ -191,7 +191,7 @@ public class LocationUtil {
 
     public static Location getSafeDestination(final Location loc) throws PlayerWarpException {
         if (loc == null || loc.getWorld() == null) {
-            throw new PlayerWarpException(tl("destinationNotSet"));
+            throw new PlayerWarpException(tl(MessageManager.getString("destinationNotSet")));
         }
         final World world = loc.getWorld();
         int x = loc.getBlockX();
@@ -237,7 +237,7 @@ public class LocationUtil {
                 x += 1;
                 y = world.getHighestBlockYAt(x, z);
                 if (x - 48 > loc.getBlockX()) {
-                    throw new PlayerWarpException(tl("holeInFloor"));
+                    throw new PlayerWarpException(tl(MessageManager.getString("holeInFloor")));
                 }
             }
         }
