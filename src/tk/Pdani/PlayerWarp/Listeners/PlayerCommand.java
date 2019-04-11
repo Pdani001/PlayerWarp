@@ -210,12 +210,7 @@ public class PlayerCommand extends BukkitCommand {
 							sender.sendMessage(c(e.getMessage()));
 							return true;
 						}
-						int i = 1;
-						while(LocationUtil.isBlockUnsafeForUser(player,loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) {
-							if(i>8) {
-								Main.getInstance().getLogger().log(Level.INFO, "Breaking out...");
-								break;
-							}
+						if(LocationUtil.isBlockUnsafeForUser(player,loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) {
 							unsafe = true;
 							try {
 								loc = LocationUtil.getSafeDestination(player,loc);
@@ -223,7 +218,6 @@ public class PlayerCommand extends BukkitCommand {
 								sender.sendMessage(c(e.getMessage()));
 								return true;
 							}
-							i++;
 						}
 						String text = c(MessageManager.getString("warping"));
 						text = tl(text,warp);
