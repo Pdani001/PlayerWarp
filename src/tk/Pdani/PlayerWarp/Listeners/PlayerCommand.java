@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -16,8 +17,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import tk.Pdani.PlayerWarp.HelpType;
+import tk.Pdani.PlayerWarp.LocationUtil;
 import tk.Pdani.PlayerWarp.Main;
-import tk.Pdani.PlayerWarp.Message;
+import static tk.Pdani.PlayerWarp.Message.tl;
 import tk.Pdani.PlayerWarp.PlayerWarpException;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
 import tk.Pdani.PlayerWarp.Managers.WarpManager;
@@ -25,7 +27,6 @@ import tk.Pdani.PlayerWarp.Managers.WarpManager;
 public class PlayerCommand extends BukkitCommand {
 	private JavaPlugin plugin = null;
 	private WarpManager wm = null;
-	private Message m = null;
 	private HashMap<Player, BukkitTask> delayed = new HashMap<Player, BukkitTask>();
 	private static final int WARPS_PER_PAGE = 10;
 	private static String CMD_LIST = "list";
@@ -50,7 +51,6 @@ public class PlayerCommand extends BukkitCommand {
 		this.setAliases(aliases);
 		this.plugin = plugin;
 		this.wm = new WarpManager(this.plugin);
-		this.m = new Message(this.plugin);
 		CMD_LIST = this.plugin.getConfig().getString("cmdargs.list",CMD_LIST);
 		CMD_LISTOWN = this.plugin.getConfig().getString("cmdargs.listown",CMD_LISTOWN);
 		CMD_CREATE = this.plugin.getConfig().getString("cmdargs.create",CMD_CREATE);
@@ -93,7 +93,7 @@ public class PlayerCommand extends BukkitCommand {
 					}
 					if(list.equals(""))
 						list = MessageManager.getString("none");
-					sender.sendMessage(c(m.tl(MessageManager.getString("ownWarps"), list)));
+					sender.sendMessage(c(tl(MessageManager.getString("ownWarps"), list)));
 				} else if(args[0].equalsIgnoreCase(CMD_CREATE)){
 					if(!(sender instanceof Player)){
 						sender.sendMessage(ChatColor.RED + "This command can only be used in-game!");
@@ -136,10 +136,10 @@ public class PlayerCommand extends BukkitCommand {
 						e.printStackTrace();
 						return false;
 					} catch (PlayerWarpException e) {
-						String msg = m.tl(MessageManager.getString("errorWithMsg"), e.getMessage());
+						String msg = tl(MessageManager.getString("errorWithMsg"), e.getMessage());
 						sender.sendMessage(c(msg));
 					}
-					String msg = m.tl(MessageManager.getString("reload"), "v"+plugin.getDescription().getVersion());
+					String msg = tl(MessageManager.getString("reload"), "v"+plugin.getDescription().getVersion());
 					sender.sendMessage(ChatColor.RED + msg);
 				} else if(Main.msgUpdate && args[0].equalsIgnoreCase(CMD_UPDATEMSG)){
 					if(!sender.hasPermission("playerwarp.reload")){
@@ -159,20 +159,21 @@ public class PlayerCommand extends BukkitCommand {
 					String warp = args[0];
 					if(!wm.isWarp(warp)){
 						String text = c(MessageManager.getString("warpNotFound"));
-						text = m.tl(text,warp);
+						text = tl(text,warp);
 						sender.sendMessage(text);
 						return true;
 					}
 					int delay = plugin.getConfig().getInt("warpDelay",0);
-					final String textd = m.tl(c(MessageManager.getString("warpingDelayed")),warp,delay);
+					final String textd = tl(c(MessageManager.getString("warpingDelayed")),warp,delay);
 					if(delay > 0){
 						cancelWarping(player);
 						sender.sendMessage(textd);
 						BukkitTask task = Main.taskLater(new Runnable() {
 				            @Override
 				            public void run() {
+				            	boolean unsafe = false;
 				            	String text = c(MessageManager.getString("warping"));
-								text = m.tl(text,warp);
+								text = tl(text,warp);
 				            	sender.sendMessage(text);
 				            	Location loc = null;
 								try {
@@ -181,12 +182,27 @@ public class PlayerCommand extends BukkitCommand {
 									sender.sendMessage(c(e.getMessage()));
 									return;
 								}
+								if(LocationUtil.isBlockUnsafeForUser(player,loc.getWorld(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ())) {
+									unsafe = true;
+									try {
+										loc = LocationUtil.getSafeDestination(player, loc);
+									} catch (PlayerWarpException e) {
+										sender.sendMessage(c(e.getMessage()));
+										return;
+									}
+								}
 								player.teleport(loc);
 								delayed.remove(player);
+								if(unsafe && player.getAllowFlight()) {
+									if(LocationUtil.shouldFly(loc)) {
+										player.setFlying(true);
+									}
+								}
 				            }
 						},(long)delay*20L);
 						delayed.put(player, task);
 					} else {
+						boolean unsafe = true;
 						Location loc = null;
 						try {
 							loc = wm.getWarpLocation(warp);
@@ -194,10 +210,30 @@ public class PlayerCommand extends BukkitCommand {
 							sender.sendMessage(c(e.getMessage()));
 							return true;
 						}
+						int i = 1;
+						while(LocationUtil.isBlockUnsafeForUser(player,loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) {
+							if(i>8) {
+								Main.getInstance().getLogger().log(Level.INFO, "Breaking out...");
+								break;
+							}
+							unsafe = true;
+							try {
+								loc = LocationUtil.getSafeDestination(player,loc);
+							} catch (PlayerWarpException e) {
+								sender.sendMessage(c(e.getMessage()));
+								return true;
+							}
+							i++;
+						}
 						String text = c(MessageManager.getString("warping"));
-						text = m.tl(text,warp);
+						text = tl(text,warp);
 						sender.sendMessage(text);
 						player.teleport(loc);
+						if(unsafe && player.getAllowFlight()) {
+							if(LocationUtil.shouldFly(loc)) {
+								player.setFlying(true);
+							}
+						}
 					}
 				}
 			} else if(args.length == 2) {
@@ -220,7 +256,7 @@ public class PlayerCommand extends BukkitCommand {
 					int count = wm.getPlayerWarps(player).size();
 					if(limit != -1 && count >= limit){
 						String msg = c(MessageManager.getString("warpLimitReached"));
-						msg = m.tl(msg, limit);
+						msg = tl(msg, limit);
 						sender.sendMessage(msg);
 						return true;
 					}
@@ -276,10 +312,10 @@ public class PlayerCommand extends BukkitCommand {
 					String top,owner,world,pos,w;
 					w = loc.getWorld().getName();
 					w = plugin.getConfig().getString("worldAlias."+w,w);
-					top = m.tl(MessageManager.getString("info.top"),warp);
-					owner = m.tl(MessageManager.getString("info.owner"),player.getName());
-					world = m.tl(MessageManager.getString("info.world"),w);
-					pos = m.tl(MessageManager.getString("info.pos"),loc.getX(),loc.getY(),loc.getZ());
+					top = tl(MessageManager.getString("info.top"),warp);
+					owner = tl(MessageManager.getString("info.owner"),player.getName());
+					world = tl(MessageManager.getString("info.world"),w);
+					pos = tl(MessageManager.getString("info.pos"),loc.getX(),loc.getY(),loc.getZ());
 					sender.sendMessage(c(top));
 					sender.sendMessage(c(owner));
 					sender.sendMessage(c(world));
@@ -346,7 +382,7 @@ public class PlayerCommand extends BukkitCommand {
 							//amount = getLimit(target);
 						}
 						String limit = (amount == -1) ? MessageManager.getString("unlimited") : Integer.toString(amount);
-						sender.sendMessage(c(this.m.tl(MessageManager.getString("count.info"),target.getName(),limit)));
+						sender.sendMessage(c(tl(MessageManager.getString("count.info"),target.getName(),limit)));
 					} else {
 						sender.sendMessage(c(MessageManager.getString("count.invalidMethod")));
 					}
@@ -386,7 +422,7 @@ public class PlayerCommand extends BukkitCommand {
 			String plugin_name = plugin.getName();
 			String plugin_version = plugin.getDescription().getVersion();
 			String plugin = MessageManager.getString("plugin");
-			plugin = m.tl(plugin, plugin_name, plugin_version, plugin_author);
+			plugin = tl(plugin, plugin_name, plugin_version, plugin_author);
 			plugin = ChatColor.translateAlternateColorCodes('&',plugin);
 			sender.sendMessage(plugin);
 			if(sender instanceof Player){
@@ -395,7 +431,7 @@ public class PlayerCommand extends BukkitCommand {
 				String limit = (l == -1) ? MessageManager.getString("unlimited") : Integer.toString(l);
 				String msg = ChatColor.translateAlternateColorCodes('&', MessageManager.getString("help.warp_count"));
 				int count = wm.getPlayerWarps(p).size();
-				msg = m.tl(msg, count, limit);
+				msg = tl(msg, count, limit);
 				sender.sendMessage(msg);
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_WARP+c("&7 - &6"+MessageManager.getString("help.warp")));
 				sender.sendMessage(ChatColor.getByChar(CMD_COLOR) + l(label)+CMD_LIST+c("&7 - &6"+MessageManager.getString("help.list")));
@@ -519,7 +555,7 @@ public class PlayerCommand extends BukkitCommand {
         }
         if(warps.equals(""))
         	warps = MessageManager.getString("none");
-		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', m.tl(MessageManager.getString("warpList"), page, maxPages, warps)));
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', tl(MessageManager.getString("warpList"), page, maxPages, warps)));
 	}
 	
 	public WarpManager getWM(){

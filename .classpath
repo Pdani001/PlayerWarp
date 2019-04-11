@@ -3,7 +3,8 @@
 	<classpathentry excluding="resources/" kind="src" path="src"/>
 	<classpathentry kind="src" path="src/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/user/Desktop/Eclipse-Includes/spigot/spigot-1.12.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/user/Desktop/Eclipse-Includes/plugins/Vault.jar"/>
+	<classpathentry kind="lib" path="G:/Eclipse-Includes/spigot/spigot-1.12.2.jar"/>
+	<classpathentry kind="lib" path="G:/Eclipse-Includes/plugins/Vault.jar"/>
+	<classpathentry kind="lib" path="G:/Eclipse-Includes/plugins/EssentialsX.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

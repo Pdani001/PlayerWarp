@@ -16,8 +16,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import tk.Pdani.PlayerWarp.LocationUtil;
 import tk.Pdani.PlayerWarp.Main;
-import tk.Pdani.PlayerWarp.Message;
+import static tk.Pdani.PlayerWarp.Message.tl;
 import tk.Pdani.PlayerWarp.PlayerWarpException;
 
 public class WarpManager {
@@ -26,11 +27,9 @@ public class WarpManager {
 	private ArrayList<String> restricted = new ArrayList<String>();
 	private JavaPlugin plugin = null;
 	private CustomConfig cc = null;
-	private Message m = null;
 	public WarpManager(JavaPlugin plugin){
 		this.plugin = plugin;
 		this.cc = new CustomConfig(this.plugin);
-		this.m = new Message(this.plugin);
 		putRestricted();
 		try {
 			loadWarps();
@@ -74,19 +73,25 @@ public class WarpManager {
 		if(isWarp(name)){
 			if(!owner.hasPermission("playerwarp.create.override")){
 				String text = MessageManager.getString("warpAlreadyExists");
-				throw new PlayerWarpException(m.tl(text,name));
+				throw new PlayerWarpException(tl(text,name));
 			} else {
 				delWarp(null,name);
 			}
 		}
 		if(this.restricted.contains(name.toLowerCase())){
 			String text = MessageManager.getString("warpNameRestricted");
-			throw new PlayerWarpException(m.tl(text,name));
+			throw new PlayerWarpException(tl(text,name));
 		}
 		String pat = "^[\\p{L}0-9]*$";
 		if(!name.matches(pat)){
 			String text = MessageManager.getString("warpNameWithIllegalChars");
 			throw new PlayerWarpException(text);
+		}
+		Location l = owner.getLocation();
+		
+		if(LocationUtil.isBlockUnsafe(l.getWorld(), l.getBlockX(), l.getBlockY(), l.getBlockZ()) && !owner.hasPermission("playerwarp.create.unsafe")) {
+			String text = MessageManager.getString("unsafeWarpDestination");
+			throw new PlayerWarpException(tl(text));
 		}
 		OfflinePlayer op = owner;
 		String uuid = op.getUniqueId().toString();
@@ -100,7 +105,6 @@ public class WarpManager {
 			this.warps.put(op, list);
 		}
 		
-		Location l = owner.getLocation();
 		cc.getConfig(uuid).set("warps."+name+".location.world", l.getWorld().getName());
 		cc.getConfig(uuid).set("warps."+name+".location.x", l.getX());
 		cc.getConfig(uuid).set("warps."+name+".location.y", l.getY());
@@ -110,13 +114,13 @@ public class WarpManager {
 		cc.saveConfig(uuid);
 		
 		String msg = MessageManager.getString("warpCreated");
-		msg = m.tl(msg,name);
+		msg = tl(msg,name);
 		owner.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 	}
 	public void delWarp(Player user, String warp) throws PlayerWarpException{
 		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
-			throw new PlayerWarpException(m.tl(text,warp));
+			throw new PlayerWarpException(tl(text,warp));
 		}
 		if(user != null){
 			String uuid = user.getUniqueId().toString();
@@ -125,7 +129,7 @@ public class WarpManager {
 			boolean isOwner = (warpowner != null && warpowner.equals(uuid));
 			if(!isOwner && !user.hasPermission("playerwarp.remove.others")){
 				String text = MessageManager.getString("notOwnerOfWarp");
-				throw new PlayerWarpException(m.tl(text,warp));
+				throw new PlayerWarpException(tl(text,warp));
 			}
 			ArrayList<String> olist = new ArrayList<String>();
 			olist.addAll(warps.get(owner));
@@ -133,7 +137,7 @@ public class WarpManager {
 			boolean success = olist.remove(name);
 			if(!success){
 				String msg = MessageManager.getString("warpRemoveError");
-				msg = m.tl(msg,warp);
+				msg = tl(msg,warp);
 				user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 			} else {
 				warps.put(owner, olist);
@@ -142,10 +146,10 @@ public class WarpManager {
 				String msg = "";
 				if(isOwner){
 					msg = MessageManager.getString("warpRemoved");
-					msg = m.tl(msg,warp);
+					msg = tl(msg,warp);
 				} else {
 					msg = MessageManager.getString("warpRemovedOther");
-					msg = m.tl(msg,owner.getName(),warp);
+					msg = tl(msg,owner.getName(),warp);
 				}
 				user.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
 			}
@@ -158,7 +162,7 @@ public class WarpManager {
 			boolean success = olist.remove(name);
 			if(!success){
 				String msg = MessageManager.getString("warpRemoveError");
-				msg = m.tl(msg,warp);
+				msg = tl(msg,warp);
 				throw new PlayerWarpException(ChatColor.translateAlternateColorCodes('&', msg));
 			} else {
 				warps.put(owner, olist);
@@ -170,7 +174,7 @@ public class WarpManager {
 	public OfflinePlayer getWarpOwner(String warp) throws PlayerWarpException{
 		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
-			throw new PlayerWarpException(m.tl(text,warp));
+			throw new PlayerWarpException(tl(text,warp));
 		}
 		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
 			if(contains(entry.getValue(),warp)){
@@ -183,7 +187,7 @@ public class WarpManager {
 	public Location getWarpLocation(String warp) throws PlayerWarpException{
 		if(!isWarp(warp)){
 			String text = MessageManager.getString("warpNotFound");
-			throw new PlayerWarpException(m.tl(text,warp));
+			throw new PlayerWarpException(tl(text,warp));
 		}
 		for(Entry<OfflinePlayer, List<String>> entry : warps.entrySet()){
 			if(contains(entry.getValue(),warp)){
@@ -193,7 +197,7 @@ public class WarpManager {
 				World world = plugin.getServer().getWorld(w);
 				if(world == null){
 					String text = MessageManager.getString("warpWorldInvalid");
-					throw new PlayerWarpException(m.tl(text));
+					throw new PlayerWarpException(tl(text));
 				}
 				double x = cc.getConfig(uuid).getDouble("warps."+name+".location.x");
 				double y = cc.getConfig(uuid).getDouble("warps."+name+".location.y");
@@ -316,14 +320,14 @@ public class WarpManager {
 			count.replace(p, i+am);
 			cc.getConfig(uuid).set("count", i+am);
 			cc.saveConfig(uuid);
-			throw new PlayerWarpException(m.tl(text,am,p.getName()));
+			throw new PlayerWarpException(tl(text,am,p.getName()));
 		}
 		if(pc > 0)
 			am += pc;
 		cc.getConfig(uuid).set("count", am);
 		cc.saveConfig(uuid);
 		count.put(p, am);
-		throw new PlayerWarpException(m.tl(text,am-pc,p.getName()));
+		throw new PlayerWarpException(tl(text,am-pc,p.getName()));
 	}
 	
 	public void delCount(OfflinePlayer p, int am) throws PlayerWarpException{
@@ -345,10 +349,10 @@ public class WarpManager {
 			}
 			cc.saveConfig(uuid);
 			String text = MessageManager.getString("count.removed");
-			throw new PlayerWarpException(m.tl(text,am,p.getName()));
+			throw new PlayerWarpException(tl(text,am,p.getName()));
 		}
 		String text = MessageManager.getString("count.notEnough");
-		throw new PlayerWarpException(m.tl(text,p.getName()));
+		throw new PlayerWarpException(tl(text,p.getName()));
 	}
 	
 	public Object getCount(OfflinePlayer p){

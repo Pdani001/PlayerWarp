@@ -10,22 +10,18 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Based on Essentials' I18n class
  */
 public class Message {
-	private JavaPlugin plugin = null;
+	private static JavaPlugin plugin = Main.getInstance();
 	private static final Pattern NODOUBLEMARK = Pattern.compile("''");
 	
-	public Message(JavaPlugin plugin){
-		this.plugin = plugin;
-	}
-	
-	public String tl(final String string, final Object... objects) {
+	public static String tl(final String string, final Object... objects) {
         if (objects.length == 0) {
             return NODOUBLEMARK.matcher(string).replaceAll("'");
         } else {
-            return this.format(string, objects);
+            return format(string, objects);
         }
     }
 
-    private String format(final String string, final Object... objects) {
+    private static String format(final String string, final Object... objects) {
     	String format = string;
 		MessageFormat messageFormat = null;
 		try {
@@ -34,6 +30,9 @@ public class Message {
 			plugin.getLogger().log(Level.SEVERE, "Invalid Translation key for '" + string + "': " + e.getMessage());
 			format = format.replaceAll("\\{(\\D*?)\\}", "\\[$1\\]");
 			messageFormat = new MessageFormat(format);
+		} catch (NullPointerException e) {
+			plugin.getLogger().log(Level.SEVERE, e.getMessage());
+			return format;
 		}
         return messageFormat.format(objects);
     }

@@ -5,17 +5,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import tk.Pdani.PlayerWarp.Message;
+import static tk.Pdani.PlayerWarp.Message.tl;
 import tk.Pdani.PlayerWarp.Managers.MessageManager;
 
 public class MoveEvent implements Listener {
 	private PlayerCommand pc = null;
-	private Message m = null;
-	public MoveEvent(PlayerCommand pc, JavaPlugin plugin){
+	public MoveEvent(PlayerCommand pc){
 		this.pc = pc;
-		this.m = new Message(plugin);
 	}
 	
 	@EventHandler
@@ -27,7 +24,7 @@ public class MoveEvent implements Listener {
 		if(pc.isWarping(player)){
 			pc.cancelWarping(player);
 			String text = c(MessageManager.getString("warpingCancelled"));
-			text = m.tl(text);
+			text = tl(text);
 			player.sendMessage(text);
 		}
 	}

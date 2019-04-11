@@ -16,13 +16,17 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
+
+import com.earth2me.essentials.Essentials;
 
 import tk.Pdani.PlayerWarp.Listeners.MoveEvent;
 import tk.Pdani.PlayerWarp.Listeners.PlayerCommand;
@@ -39,10 +43,19 @@ public class Main extends JavaPlugin {
 	private static Main main = null;
 	private List<String> aliases = null;
 	private PlayerCommand pc = null;
+	private Essentials ess = null;
+	private static boolean allowEss = false;
 	
 	public void onEnable(){
 		instance = this;
 		main = this;
+		
+		final Plugin essplugin = getServer().getPluginManager().getPlugin("Essentials");
+		if (essplugin != null && essplugin.isEnabled()){
+			getLogger().log(Level.INFO, "Essentials is available! Hooking...");
+			ess = (Essentials)essplugin;
+			allowEss = true;
+		}
 		
 		getConfig().options().copyDefaults(true);
 		saveDefaultConfig();
@@ -69,11 +82,12 @@ public class Main extends JavaPlugin {
 		
 		this.cc = new CustomConfig(this);
 		PlayerJoin pj = new PlayerJoin(this,cc,pc.getWM());
-		MoveEvent me = new MoveEvent(pc,this);
+		MoveEvent me = new MoveEvent(pc);
 		getServer().getPluginManager().registerEvents(pj, this);
 		getServer().getPluginManager().registerEvents(me, this);
 		//this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
+		getLogger().log(Level.INFO, "Lava: "+LocationUtil.contains(Material.LAVA));
 		List<Player> players = getOnlinePlayers();
 		for(Player p : players){
 			String uuid = p.getUniqueId().toString();
@@ -87,6 +101,10 @@ public class Main extends JavaPlugin {
 	public void onDisable(){
 		getLogger().log(Level.INFO, "Plugin disabled.");
 		unRegisterBukkitCommand("playerwarp",aliases);
+	}
+	
+	public static JavaPlugin getInstance() {
+		return instance;
 	}
 	
 	private static Object getPrivateField(Object object, String field)throws SecurityException,
@@ -166,6 +184,14 @@ public class Main extends JavaPlugin {
 	
 	public static boolean isDebug(){
 		return debug;
+	}
+	
+	public static Essentials getEss() {
+		return main.ess;
+	}
+	
+	public static boolean isEssAllowed() {
+		return allowEss;
 	}
 	
 	@SuppressWarnings("unchecked")
