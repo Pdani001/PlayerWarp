@@ -16,7 +16,6 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
@@ -87,7 +86,6 @@ public class Main extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(me, this);
 		//this.getCommand("playerwarp").setExecutor(cmdexec);
 		getLogger().log(Level.INFO, "Plugin enabled.");
-		getLogger().log(Level.INFO, "Lava: "+LocationUtil.contains(Material.LAVA));
 		List<Player> players = getOnlinePlayers();
 		for(Player p : players){
 			String uuid = p.getUniqueId().toString();

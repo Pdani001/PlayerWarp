@@ -82,10 +82,6 @@ public class LocationUtil {
             this.z = z;
         }
     }
-    
-    public static boolean contains(Material m) {
-    	return TRANSPARENT_MATERIALS.contains(m);
-    }
 
     static {
         // Materials from Material.isTransparent()
